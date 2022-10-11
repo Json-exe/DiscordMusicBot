@@ -171,6 +171,7 @@ async function execute(interaction, serverQueue) {
                 title: songInfo[0].videoDetails.title,
                 url: songInfo[0].videoDetails.video_url,
             };
+            await interaction.reply(":thumbsup:");
             const queueContruct = {
                 textChannel: interaction.channel,
                 connection: null,
@@ -183,7 +184,6 @@ async function execute(interaction, serverQueue) {
             queueContruct.songs.push(song);
             try {
                 const channel = await interaction.member.voice.channel;
-                if (!channel.joinable) return await interaction.reply('I cannot join your voice channel! Check the permissions please!');
                 var connection = joinVoiceChannel({
                     channelId: channel.id,
                     guildId: channel.guild.id,
@@ -199,24 +199,27 @@ async function execute(interaction, serverQueue) {
                 return await interaction.followUp(err);
             }
             serverQueue = await queue.get(interaction.guild.id);
-            for (let i = 1; i < songInfo.length; i++) {
+            serverQueue.songs.concat(songInfo);
+            return await interaction.followUp("Added playlist to queue! " + songInfo.length + " songs added!");
+            /*for (let i = 1; i < songInfo.length; i++) {
                 const song = {
                     title: null,
                     url: songInfo[i],
                 };
                 serverQueue.songs.push(song);
-            }
+            }*/
         } else {
             // add each song to the queue
-            for (let i = 0; i < songInfo.length; i++) {
+            serverQueue.songs.concat(songInfo);
+            return await interaction.reply("Added playlist to queue! " + songInfo.length + " songs added!");
+            /*for (let i = 0; i < songInfo.length; i++) {
                 const song = {
                     title: null,
                     url: songInfo[i],
                 };
                 serverQueue.songs.push(song);
-            }
+            }*/
         }
-        return await interaction.reply("Added playlist to queue! " + songInfo.length + " songs added!");
     } else {
         try {
             songInfo = await ytdl.getInfo(songURL);
@@ -230,6 +233,7 @@ async function execute(interaction, serverQueue) {
             url: songInfo.videoDetails.video_url,
         };
         if (!serverQueue) {
+            await interaction.reply(":thumbsup:")
             const queueContruct = {
                 textChannel: interaction.channel,
                 connection: null,
@@ -242,7 +246,6 @@ async function execute(interaction, serverQueue) {
             queueContruct.songs.push(song);
             try {
                 const channel = await interaction.member.voice.channel;
-                if (!channel.joinable) return await interaction.reply('I cannot join your voice channel! Check the permissions please!');
                 var connection = joinVoiceChannel({
                     channelId: channel.id, // 994907171982692361
                     guildId: channel.guild.id, // 994907168484642928
