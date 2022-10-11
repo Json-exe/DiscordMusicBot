@@ -199,7 +199,7 @@ async function execute(interaction, serverQueue) {
                 return await interaction.followUp(err);
             }
             serverQueue = await queue.get(interaction.guild.id);
-            serverQueue.songs.concat(songInfo);
+            serverQueue.songs = serverQueue.songs.concat(songInfo);
             return await interaction.followUp("Added playlist to queue! " + songInfo.length + " songs added!");
             /*for (let i = 1; i < songInfo.length; i++) {
                 const song = {
@@ -210,7 +210,7 @@ async function execute(interaction, serverQueue) {
             }*/
         } else {
             // add each song to the queue
-            serverQueue.songs.concat(songInfo);
+            serverQueue.songs = serverQueue.songs.concat(songInfo);
             return await interaction.reply("Added playlist to queue! " + songInfo.length + " songs added!");
             /*for (let i = 0; i < songInfo.length; i++) {
                 const song = {
@@ -255,11 +255,11 @@ async function execute(interaction, serverQueue) {
                 });
                 queueContruct.connection = connection;
                 await play(interaction.guild, queueContruct.songs[0]);
-                return await interaction.reply("Added song " + song.title + " to queue!");
+                return await interaction.followUp("Added song " + song.title + " to queue!");
             } catch (err) {
                 await console.log(err);
                 queue.delete(interaction.guild.id);
-                return await interaction.followUp(err);
+                return await interaction.followUp("Error Occurred: " + err);
             }
         } else {
             serverQueue.songs.push(song);
