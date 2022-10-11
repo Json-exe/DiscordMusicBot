@@ -1,0 +1,7 @@
+{
+  "clientId": "1028372176878964808",
+  "addedGuildIds": ["805503440339992597", "921858362067533824"],
+  "changelog" : "Current Changelog (V0.0.4.alpha):\nAdded Pause/Unpause function, fixed some errors, added Presence, added some more checks to prevent bot from doing something it shouldn't do, changed versioning to semver versioning",
+  "token": "MTAyODM3MjE3Njg3ODk2NDgwOA.GOSPRD.0nSKtkquEyGaQtksZ3QgOiOxf0x4sclEd9xGDw",
+  "version": "V0.0.4.alpha"
+}
