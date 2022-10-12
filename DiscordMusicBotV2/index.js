@@ -9,7 +9,7 @@ const {
     createAudioResource,
     NoSubscriberBehavior,
     AudioPlayerStatus,
-    StreamType, VoiceConnection, VoiceConnectionStatus
+    StreamType, VoiceConnection, VoiceConnectionStatus, demuxProbe
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 const ytpl = require('ytpl');
@@ -313,6 +313,14 @@ async function pauseUnpause(interaction, serverQueue) {
     }
 }
 
+async function probeAndCreateResource(readableStream) {
+    const { stream, type } = await demuxProbe(readableStream);
+    return createAudioResource(stream, {
+        inputType: type,
+        inlineVolume: true
+    });
+}
+
 async function play(guild, song) {
     if (x) {
         clearInterval(x);
@@ -348,11 +356,11 @@ async function play(guild, song) {
         }
         const stream = await ytdl(song.url, {
             filter: "audioonly",
-            highWaterMark: 1 << 25,
             quality: 'highestaudio'
         });
         const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
         serverQueue.audioPlayer = player;
+        // const resource = await probeAndCreateResource(stream);
         const resource = await createAudioResource(stream, {
             inputType: StreamType.Arbitrary,
             inlineVolume: true
