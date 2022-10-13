@@ -10,7 +10,8 @@ const commands = [
     new SlashCommandBuilder().setName('play-server-file').setDescription('Plays a file from the server.').addStringOption(option => option.setName('filename').setDescription('The name of the file to play.').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     new SlashCommandBuilder().setName('available-server-music').setDescription('Lists all available music files on the server.').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     new SlashCommandBuilder().setName('changelog').setDescription('Shows the changelog of the bot.'),
-    new SlashCommandBuilder().setName('pause-unpause').setDescription('Pauses or unpauses the current song.')
+    new SlashCommandBuilder().setName('pause-unpause').setDescription('Pauses or unpauses the current song.'),
+    new SlashCommandBuilder().setName('feedback').setDescription('Sends feedback to the developer.'),
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(token);

@@ -1,4 +1,4 @@
-const {Client, GatewayIntentBits} = require('discord.js');
+const {Client, GatewayIntentBits, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const {token, changelog, version} = require('./config.json');
 const {join} = require('path');
 const fs = require('node:fs');
@@ -40,6 +40,15 @@ client.once('reconnecting', () => {
 
 client.once('disconnect', () => {
     console.log('Disconnect!');
+});
+
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isModalSubmit()) return;
+    if (interaction.customId === "feedback-modal") {
+        await interaction.reply({ content: "Thank you for your feedback!" });
+        const feedback = interaction.fields.getTextInputValue("feedback-text");
+        console.log(feedback + " | from " + interaction.user.username);
+    }
 });
 
 console.log(generateDependencyReport());
@@ -93,10 +102,31 @@ client.on('interactionCreate', async interaction => {
     } else if (commandName === 'pause-unpause') {
         await pauseUnpause(interaction, serverQueue);
         return;
+    } else if (commandName === 'feedback') {
+        await feedback(interaction);
+        return;
     } else {
         await interaction.reply('Unknown command');
     }
 })
+
+async function feedback(interaction){
+    try {
+        const modal = new ModalBuilder()
+            .setCustomId("feedback-modal")
+            .setTitle("Feedback");
+        const feedback = new TextInputBuilder()
+            .setCustomId("feedback-text")
+            .setLabel("Feedback")
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+        const row = new ActionRowBuilder().addComponents(feedback);
+        modal.addComponents(row);
+        await interaction.showModal(modal);
+    } catch (e) {
+        console.log(e);
+    }
+}
 
 async function getAllFiles(interaction) {
     const path = join(__dirname, '\\music');
@@ -362,11 +392,10 @@ async function play(guild, song) {
         serverQueue.audioPlayer = player;
         // const resource = await probeAndCreateResource(stream);
         const resource = await createAudioResource(stream, {
-            inputType: StreamType.Arbitrary,
-            inlineVolume: true
+            inputType: StreamType.Arbitrary
         });
         const connection = serverQueue.connection;
-        await resource.volume.setVolume(serverQueue.volume / 5);
+        // await resource.volume.setVolume(serverQueue.volume / 5);
         await connection.subscribe(player);
         player.on(AudioPlayerStatus.Idle, () => {
             console.log("AudioPlayerStatus.Idle -> Playing next song, if one exists");

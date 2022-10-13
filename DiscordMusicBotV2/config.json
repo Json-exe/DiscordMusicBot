@@ -1,7 +1,7 @@
 {
   "clientId": "1028372176878964808",
   "addedGuildIds": ["805503440339992597", "921858362067533824"],
-  "changelog" : "\nFixed problems with playlist support, really small performance improvements, reworked available-server-music command, fixed things that could lead to problems in future",
+  "changelog" : "\nAdded feedback command where you can send feedback for the bot",
   "token": "MTAyODM3MjE3Njg3ODk2NDgwOA.GOSPRD.0nSKtkquEyGaQtksZ3QgOiOxf0x4sclEd9xGDw",
-  "version": "V0.0.5.alpha"
+  "version": "V0.0.6.alpha"
 }
