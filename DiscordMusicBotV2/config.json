@@ -3,6 +3,6 @@
   "addedGuildIds": ["805503440339992597", "921858362067533824"],
   "changelog" : "\n- Temporarily removed spotify support \n- Reworked Bot backend \n- Fixed Respond problems with play command \n- Eventually improved performance",
   "token": "MTAyODM3MjE3Njg3ODk2NDgwOA.GOSPRD.0nSKtkquEyGaQtksZ3QgOiOxf0x4sclEd9xGDw",
-  "version": "V0.1.0.alpha"
+  "version": "V0.1.1.alpha"
 }
 

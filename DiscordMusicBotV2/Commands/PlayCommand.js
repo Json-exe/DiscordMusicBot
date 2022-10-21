@@ -45,7 +45,8 @@ module.exports = {
             }
             songInfo = playlist.items.map(item => item.url);
             serverQueue = await queue.get(interaction.guild.id);
-            if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected) {
+            if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
+                serverQueue.songs.length === 0) {
                 try {
                     var firstSong = songInfo[0];
                     if (firstSong.includes("list=")) {
@@ -122,7 +123,8 @@ module.exports = {
                 title: songInfo.videoDetails.title,
                 url: songInfo.videoDetails.video_url,
             };
-            if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected) {
+            if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
+                serverQueue.songs.length === 0) {
                 // Check if connection is destroyed
                 const queueContruct = {
                     textChannel: interaction.channel,
