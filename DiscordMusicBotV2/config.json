@@ -1,7 +1,7 @@
 {
   "clientId": "1028372176878964808",
   "addedGuildIds": ["805503440339992597", "921858362067533824"],
-  "changelog" : "\nAdded feedback command where you can send feedback for the bot",
+  "changelog" : "\nAdded Spotify support for single songs. (PLAYLIST ARE UNSUPPORTED! More info available when you play a Playlist Link from Spotify!), fixed some problems, fixed bot move problem, updated feedback function",
   "token": "MTAyODM3MjE3Njg3ODk2NDgwOA.GOSPRD.0nSKtkquEyGaQtksZ3QgOiOxf0x4sclEd9xGDw",
-  "version": "V0.0.6.alpha"
+  "version": "V0.0.9.alpha"
 }

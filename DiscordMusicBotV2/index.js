@@ -1,23 +1,52 @@
-const {Client, GatewayIntentBits, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
-const {token, changelog, version} = require('./config.json');
-const {join} = require('path');
+const path = require('node:path');
+
+const {
+    Client,
+    GatewayIntentBits,
+    Collection
+} = require('discord.js');
+const {token, version} = require('./config.json');
 const fs = require('node:fs');
 const {
     joinVoiceChannel,
-    getVoiceConnection,
     createAudioPlayer,
     createAudioResource,
     NoSubscriberBehavior,
     AudioPlayerStatus,
-    StreamType, VoiceConnection, VoiceConnectionStatus, demuxProbe
+    StreamType, VoiceConnectionStatus, demuxProbe
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
-const ytpl = require('ytpl');
 const {generateDependencyReport} = require('@discordjs/voice');
+/*const fetch = require('isomorphic-unfetch');
+const { getPreview, getTracks } = require('spotify-url-info')(fetch);
+const youTube = require("youtube-sr").default;*/
 
 const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates]});
 
 const args = process.argv.slice(2);
+
+console.log(generateDependencyReport());
+
+const queue = new Map();
+// Export the queue, so it can be used in other files
+module.exports.queue = queue;
+
+
+client.commands = new Collection();
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = require(filePath);
+    // Set a new item in the Collection with the key as the command name and the value as the exported module
+    if ('data' in command && 'execute' in command) {
+        client.commands.set(command.data.name, command);
+    } else {
+        console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+    }
+}
+
 
 client.once('ready', () => {
     console.log('Ready!');
@@ -25,7 +54,7 @@ client.once('ready', () => {
         client.user.setPresence({
             activities: [{name: "Under Maintenance. Do not use!"}],
             status: 'dnd'
-    });
+        });
     } else {
         client.user.setPresence({
             activities: [{name: `Chilling in Alpha! (${version})`}],
@@ -45,319 +74,59 @@ client.once('disconnect', () => {
 client.on('interactionCreate', async interaction => {
     if (!interaction.isModalSubmit()) return;
     if (interaction.customId === "feedback-modal") {
-        await interaction.reply({ content: "Thank you for your feedback!" });
+        await interaction.reply({content: "Thank you for your feedback!"});
         const feedback = interaction.fields.getTextInputValue("feedback-text");
-        console.log(feedback + " | from " + interaction.user.username);
+        // Save the feedback and the user to the feedback.json file
+        const file = require('./feedback.json');
+        await file.feedbackFile.push({user: interaction.user.username, feedback: feedback});
+        await fs.writeFileSync('./feedback.json', JSON.stringify(file));
+        await console.log("Saved feedback to feedback.json");
     }
 });
-
-console.log(generateDependencyReport());
-
-const queue = new Map();
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    const {commandName} = interaction;
+    const serverQueue = await queue.get(interaction.guild.id);
 
-    const serverQueue = queue.get(interaction.guild.id);
+    const command = interaction.client.commands.get(interaction.commandName);
 
-    if (commandName === 'join-voice') {
-        const channel = interaction.member.voice.channel;
-        if (!channel) return interaction.reply('You need to join a voice channel first!');
-        if (!channel.joinable) return interaction.reply('I cannot join your voice channel! Check the permissions please!');
-        const connection = joinVoiceChannel({
-            channelId: channel.id,
-            guildId: channel.guild.id,
-            adapterCreator: channel.guild.voiceAdapterCreator,
-            selfDeaf: false,
-            selfMute: false
-        });
-        await console.log("Joined Voice Channel " + channel.name);
-        await interaction.reply('Joined your voice channel!');
-    } else if (commandName === 'leave-voice') {
-        const connection = getVoiceConnection(interaction.guildId);
-        if (!interaction) return interaction.reply('I am not in a voice channel!');
-        connection.destroy();
-        await console.log("Left voice channel on Server " + interaction.guild.name);
-        await interaction.reply('Left your voice channel!');
-    } else if (commandName === 'play') {
-        await execute(interaction, serverQueue);
+    if (!command) {
+        console.error(`No command matching ${interaction.commandName} was found.`);
         return;
-    } else if (commandName === 'skip') {
-        await skip(interaction, serverQueue);
-        return;
-    } else if (commandName === 'stop') {
-        await stop(interaction, serverQueue);
-        return;
-    } else if (commandName === 'play-server-file') {
-        await playServerFile(interaction, serverQueue);
-        return;
-    } else if (commandName === 'available-server-music') {
-        await getAllFiles(interaction);
-        return;
-    } else if (commandName === 'changelog') {
-        await interaction.reply({ content: "Current changelog (" +version + "): " + changelog, ephemeral: true});
-        return;
-    } else if (commandName === 'pause-unpause') {
-        await pauseUnpause(interaction, serverQueue);
-        return;
-    } else if (commandName === 'feedback') {
-        await feedback(interaction);
-        return;
-    } else {
-        await interaction.reply('Unknown command');
     }
-})
 
-async function feedback(interaction){
     try {
-        const modal = new ModalBuilder()
-            .setCustomId("feedback-modal")
-            .setTitle("Feedback");
-        const feedback = new TextInputBuilder()
-            .setCustomId("feedback-text")
-            .setLabel("Feedback")
-            .setStyle(TextInputStyle.Paragraph)
-            .setRequired(true);
-        const row = new ActionRowBuilder().addComponents(feedback);
-        modal.addComponents(row);
-        await interaction.showModal(modal);
-    } catch (e) {
-        console.log(e);
+        await command.execute(interaction, serverQueue);
+    } catch (error) {
+        console.error(error);
+        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
     }
-}
+});
 
-async function getAllFiles(interaction) {
-    const path = join(__dirname, '\\music');
-    const files = fs.readdirSync(path, (err, files) => {
-        files.forEach(file => {
-            console.log(file);
-        });
-    }).filter(file => file.endsWith('.mp3'));
-    let fileNames = "";
-    files.forEach(file => {
-        fileNames += file + " | ";
-    });
-    return await interaction.reply({ content: "Available files: " + fileNames, ephemeral: true });
-}
-
-async function playServerFile(interaction, serverQueue) {
-    // Get the filename from the interaction
-    const filename = interaction.options.getString('filename');
-    const channel = interaction.member.voice.channel;
-    if (!channel) return interaction.reply('You need to join a voice channel first!');
-    if (serverQueue) {
-        // Delete serverQueue if it exists
-        serverQueue.audioPlayer?.stop(true);
-        queue.delete(interaction.guild.id);
-    }
-    const connection = joinVoiceChannel({
-        channelId: channel.id,
-        guildId: channel.guild.id,
-        adapterCreator: channel.guild.voiceAdapterCreator,
-        selfDeaf: false,
-        selfMute: false
-    });
-    const player = createAudioPlayer({
-        behaviors: {
-            noSubscriber: NoSubscriberBehavior.Pause,
-        },
-    });
-    const path = join(__dirname, `\\music\\${filename}.mp3`);
-    // If the file does not exist, return
-    if (!fs.existsSync(path)) {
-        return await interaction.reply({ content: "File not found!", ephemeral: true });
-    }
-    const resource = createAudioResource(path, {
-        inputType: StreamType.Arbitrary,
-        inlineVolume: true,
-    });
-    player.play(resource);
-    connection.subscribe(player);
-    await interaction.reply({ content: `Playing ${filename}!`, ephemeral: true });
-}
-
-async function execute(interaction, serverQueue) {
-    const voiceChannel = await interaction.member.voice.channel;
-    if (!voiceChannel)
-        return await interaction.reply(
-            "You need to be in a voice channel to play music!"
-        );
-
-    if (!voiceChannel.joinable) return await interaction.reply('I cannot join your voice channel! Check the permissions please!');
-
-    const permissions = await voiceChannel.permissionsFor(interaction.client.user);
-    if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-        return await interaction.reply(
-            "I need the permissions to join and speak in your voice channel!"
-        );
-    }
-
-    const songURL = interaction.options.getString('song');
-    let songInfo;
-
-    // Get all songs from the playlist if the URL is a playlist
-    if (songURL.includes("list=")) {
-        // Get the playlist ID from the URL
-        const playlistID = songURL.split("list=")[1];
-        var playlist;
-        try {
-            playlist = await ytpl(playlistID);
-        } catch (error) {
-            await console.log(error);
-            return await interaction.reply("Failed to load Playlist. Please check the URL and try again!");
-        }
-        songInfo = playlist.items.map(item => item.url);
-        serverQueue = await queue.get(interaction.guild.id);
-        if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected) {
-            try {
-                var firstSong = songInfo[0];
-                if (firstSong.includes("list=")) {
-                    // Get only the video id
-                    firstSong = firstSong.split("&list=")[0];
-                }
-                firstSong = await ytdl.getInfo(firstSong);
-            } catch (error) {
-                await console.error(error);
-                await interaction.followUp("Failed adding song: " + firstSong);
-            }
-            const song = {
-                title: firstSong.videoDetails.title,
-                url: firstSong.videoDetails.video_url,
-            };
-            await interaction.reply(":thumbsup:");
-            const queueContruct = {
-                textChannel: interaction.channel,
-                connection: null,
-                songs: [],
-                volume: 5,
-                playing: true,
-                audioPlayer: null
-            };
-            await queue.set(interaction.guild.id, queueContruct);
-            queueContruct.songs.push(song);
-            try {
-                const channel = await interaction.member.voice.channel;
-                var connection = joinVoiceChannel({
-                    channelId: channel.id,
-                    guildId: channel.guild.id,
-                    adapterCreator: await channel.guild.voiceAdapterCreator,
-                    selfDeaf: false,
-                    selfMute: false
-                });
-                await console.log("Joined Voice Channel " + channel.name);
-                queueContruct.connection = connection;
-                await play(interaction.guild, queueContruct.songs[0]);
-            } catch (err) {
-                await console.log(err);
-                queue.delete(interaction.guild.id);
-                return await interaction.followUp(err);
-            }
-            // Remove the first song from the array
-            songInfo.shift();
-            serverQueue = await queue.get(interaction.guild.id);
-            for (let i = 0; i < songInfo.length; i++) {
-                const song = {
-                    title: null,
-                    url: songInfo[i],
-                };
-                serverQueue.songs.push(song);
-            }
-            return await interaction.followUp("Added playlist to queue! " + (songInfo.length + 1) + " songs added!");
-        } else {
-            // add each song to the queue
-            for (let i = 0; i < songInfo.length; i++) {
-                const song = {
-                    title: null,
-                    url: songInfo[i],
-                };
-                serverQueue.songs.push(song);
-            }
-            return await interaction.reply("Added playlist to queue! " + (songInfo.length + 1) + " songs added!");
-        }
-    } else {
-        try {
-            songInfo = await ytdl.getInfo(songURL);
-            await console.log("Got song info");
-        } catch (error) {
-            await console.log(error);
-            return await interaction.reply("Song info not found, try checking the URL!");
-        }
-        const song = {
-            title: songInfo.videoDetails.title,
-            url: songInfo.videoDetails.video_url,
-        };
-        if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected) {
-            // Check if connection is destroyed
-            await interaction.reply(":thumbsup:")
-            const queueContruct = {
-                textChannel: interaction.channel,
-                connection: null,
-                songs: [],
-                volume: 5,
-                playing: true,
-                audioPlayer: null
-            };
-            await queue.set(interaction.guild.id, queueContruct);
-            queueContruct.songs.push(song);
-            try {
-                const channel = await interaction.member.voice.channel;
-                var connection = joinVoiceChannel({
-                    channelId: channel.id, // 994907171982692361
-                    guildId: channel.guild.id, // 994907168484642928
-                    adapterCreator: await channel.guild.voiceAdapterCreator,
-                    selfDeaf: false,
-                    selfMute: false
-                });
-                queueContruct.connection = connection;
-                await console.log("Joined Voice Channel " + channel.name);
-                await play(interaction.guild, queueContruct.songs[0]);
-                return await interaction.followUp("Added song " + song.title + " to queue!");
-            } catch (err) {
-                await console.log(err);
-                queue.delete(interaction.guild.id);
-                return await interaction.followUp("Error Occurred: " + err);
-            }
-        } else {
-            serverQueue.songs.push(song);
-            return await interaction.reply(`${song.title} has been added to the queue!`);
-        }
-    }
-}
-
+module.exports.x = x;
 var x;
 
-async function pauseUnpause(interaction, serverQueue) {
-    if (!serverQueue || serverQueue.songs.length === 0) return await interaction.reply("There is no song playing!");
-    // Return if executing user is not in the same voice channel as the bot
-    if (interaction.member.voice.channel.id !== interaction.guild.me.voice.channel.id) return await interaction.reply("You are not in the same voice channel as the bot!");
-    if (serverQueue.playing) {
-        serverQueue.playing = false;
-        serverQueue.audioPlayer.pause();
-        await interaction.reply("Song paused!");
-    } else {
-        serverQueue.playing = true;
-        serverQueue.audioPlayer.unpause();
-        await interaction.reply("Song unpaused!");
-    }
-}
-
+/*
 async function probeAndCreateResource(readableStream) {
-    const { stream, type } = await demuxProbe(readableStream);
+    const {stream, type} = await demuxProbe(readableStream);
     return createAudioResource(stream, {
         inputType: type,
         inlineVolume: true
     });
 }
+*/
 
+
+module.exports.play = play;
 async function play(guild, song) {
     if (x) {
         clearInterval(x);
     }
+
     const serverQueue = await queue.get(guild.id);
+
     if (!song) {
-        console.log("No more songs in queue, leaving voice channel in 1 hour...");
         serverQueue.playing = false;
         var d = await new Date(Date.now());
         d.setHours(d.getHours() + 1);
@@ -371,6 +140,28 @@ async function play(guild, song) {
             }
         }, 1000);
         return;
+    }
+
+    // Check if the bot has been disconnected
+    if (serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected && guild.me.voice === null || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed && guild.me.voice === null) {
+        // Destroy the queue.
+        await console.log("Bot has been disconnected, destroying queue...");
+        queue.delete(guild.id);
+        return;
+    }
+
+    // Check if the bot has been moved to a different voice channel
+    if (serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected) {
+        // Set the new Voice connection
+        await console.log("Bot has been moved to a different voice channel, setting new voice connection...");
+        const channel = await guild.me.voice.channel;
+        serverQueue.connection = joinVoiceChannel({
+            channelId: channel.id,
+            guildId: channel.guild.id,
+            adapterCreator: await channel.guild.voiceAdapterCreator,
+            selfDeaf: true,
+            selfMute: false
+        });
     }
 
     serverQueue.playing = true;
@@ -401,6 +192,7 @@ async function play(guild, song) {
             console.log("AudioPlayerStatus.Idle -> Playing next song, if one exists");
             serverQueue.songs.shift();
             if (serverQueue.songs.length === 0) {
+                serverQueue.playing = false;
                 return serverQueue.textChannel.send("No more songs in queue, leaving voice channel in 1 hour...");
             }
             // Wait two seconds before playing next song
@@ -426,54 +218,6 @@ async function play(guild, song) {
         await console.log(error);
         await serverQueue.textChannel.send(error.message);
     }
-}
-
-async function skip(interaction, serverQueue) {
-    if (!interaction.member.voice.channel)
-        return await interaction.reply(
-            "You have to be in a voice channel to stop the music!"
-        );
-    if (!serverQueue)
-        return await interaction.reply("There is no song that I could skip! Add some to the queue!");
-
-    // Skip the given number of songs
-    const skipCount = interaction.options.getInteger('amount');
-    if (skipCount > serverQueue.songs.length) {
-        return await interaction.reply(`There are only ${serverQueue.songs.length} songs in the queue!`);
-    } else if (skipCount < 1) {
-        return await interaction.reply("You can't skip less than 1 song!");
-    } else {
-        serverQueue.songs.splice(0, skipCount);
-        await play(interaction.guild, serverQueue.songs[0]);
-        return await interaction.reply(`Skipped ${skipCount} songs!`);
-    }
-}
-
-async function stop(interaction, serverQueue) {
-    if (!interaction.member.voice.channel)
-        return await interaction.reply(
-            "You have to be in a voice channel to stop the music!"
-        );
-
-    if (!serverQueue?.connection) {
-        // Get the voice connection of the bot
-        const connection = await getVoiceConnection(interaction.guild.id);
-        if (!connection) return await interaction.reply("Im not in a voice channel!");
-        // Destroy the voice connection
-        connection.destroy();
-        await console.log("Left voice channel on Server " + interaction.guild.name);
-        return await interaction.reply("Left your voice Channel!");
-    }
-
-    if (x) {
-        clearInterval(x);
-    }
-
-    await console.log("Left voice channel on Server " + interaction.guild.name);
-    serverQueue.songs = [];
-    serverQueue.connection.destroy();
-    serverQueue.audioPlayer = null;
-    await interaction.reply("Destroyed the player!");
 }
 
 client.login(token);
