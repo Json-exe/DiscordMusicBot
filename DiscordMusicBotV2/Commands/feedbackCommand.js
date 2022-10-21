@@ -3,8 +3,7 @@ const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, Act
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('feedback')
-        .setDescription('Sends feedback to the developer.')
-        .addStringOption(option => option.setName('feedback').setDescription('The feedback to send.').setRequired(true)),
+        .setDescription('Sends feedback to the developer.'),
     async execute(interaction, serverQueue) {
         try {
             const modal = new ModalBuilder()

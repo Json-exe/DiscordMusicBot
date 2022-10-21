@@ -26,8 +26,11 @@ module.exports = {
             );
         }
 
+        const failedSongs = [];
         const songURL = interaction.options.getString('song');
         let songInfo;
+
+        interaction.deferReply();
 
         // Get all songs from the playlist if the URL is a playlist
         if (songURL.includes("list=")) {
@@ -38,7 +41,7 @@ module.exports = {
                 playlist = await ytpl(playlistID);
             } catch (error) {
                 await console.log(error);
-                return await interaction.reply("Failed to load Playlist. Please check the URL and try again!");
+                return await interaction.editReply("Failed to load Playlist. Please check the URL and try again!");
             }
             songInfo = playlist.items.map(item => item.url);
             serverQueue = await queue.get(interaction.guild.id);
@@ -52,13 +55,12 @@ module.exports = {
                     firstSong = await ytdl.getInfo(firstSong);
                 } catch (error) {
                     await console.error(error);
-                    await interaction.followUp("Failed adding song: " + firstSong);
+                    failedSongs.push("Failed adding song: " + firstSong);
                 }
                 const song = {
                     title: firstSong.videoDetails.title,
                     url: firstSong.videoDetails.video_url,
                 };
-                await interaction.reply(":thumbsup:");
                 const queueContruct = {
                     textChannel: interaction.channel,
                     connection: null,
@@ -84,7 +86,7 @@ module.exports = {
                 } catch (err) {
                     await console.log(err);
                     queue.delete(interaction.guild.id);
-                    return await interaction.followUp(err);
+                    return await interaction.editReply(err);
                 }
                 // Remove the first song from the array
                 songInfo.shift();
@@ -106,7 +108,7 @@ module.exports = {
                     };
                     serverQueue.songs.push(song);
                 }
-                return await interaction.reply("Added playlist to queue! " + (songInfo.length + 1) + " songs added!");
+                return await interaction.editReply("Added playlist to queue! " + (songInfo.length + 1) + " songs added!" + failedSongs.join("\n"));
             }
         } else {
             try {
@@ -114,7 +116,7 @@ module.exports = {
                 await console.log("Got song info");
             } catch (error) {
                 await console.log(error);
-                return await interaction.reply("Song info not found, try checking the URL!");
+                return await interaction.editReply("Song info not found, try checking the URL!");
             }
             const song = {
                 title: songInfo.videoDetails.title,
@@ -122,7 +124,6 @@ module.exports = {
             };
             if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected) {
                 // Check if connection is destroyed
-                await interaction.reply(":thumbsup:")
                 const queueContruct = {
                     textChannel: interaction.channel,
                     connection: null,
@@ -145,15 +146,15 @@ module.exports = {
                     queueContruct.connection = connection;
                     await console.log("Joined Voice Channel " + channel.name);
                     await main.play(interaction.guild, queueContruct.songs[0]);
-                    return await interaction.followUp("Added song " + song.title + " to queue!");
+                    return await interaction.editReply("Added song " + song.title + " to queue!");
                 } catch (err) {
                     await console.log(err);
                     queue.delete(interaction.guild.id);
-                    return await interaction.followUp("Error Occurred: " + err);
+                    return await interaction.editReply("Error Occurred: " + err);
                 }
             } else {
                 serverQueue.songs.push(song);
-                return await interaction.reply(`${song.title} has been added to the queue!`);
+                return await interaction.editReply(`${song.title} has been added to the queue!`);
             }
         }
     }

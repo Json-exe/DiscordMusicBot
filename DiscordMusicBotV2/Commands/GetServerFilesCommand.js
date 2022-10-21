@@ -9,13 +9,13 @@ module.exports = {
         try {
             const fs = require('fs');
             const path = require('path');
-            const dir = path.join(__dirname, '\\music');
+            const dir = path.join(__dirname, '..\\music');
             const files = fs.readdirSync(dir).filter(file => file.endsWith('.mp3'));
             let response = "";
             for (const file of files) {
-                response += file + "\n";
+                response += file + " | ";
             }
-            await interaction.reply(response);
+            await interaction.reply({ content: response, ephemeral: true });
         } catch (e) {
             console.log(e);
         }

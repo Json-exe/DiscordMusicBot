@@ -12,7 +12,7 @@ module.exports = {
                 "You have to be in a voice channel to stop the music!"
             );
 
-        if (!serverQueue?.connection) {
+        if (serverQueue?.connection === undefined) {
             // Get the voice connection of the bot
             const connection = await getVoiceConnection(interaction.guild.id);
             if (!connection) return await interaction.reply("Im not in a voice channel!");
