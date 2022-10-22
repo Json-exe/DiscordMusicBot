@@ -190,12 +190,13 @@ async function play(guild, song) {
         await connection.subscribe(player);
         player.on(AudioPlayerStatus.Idle, () => {
             console.log("AudioPlayerStatus.Idle -> Playing next song, if one exists");
-            serverQueue.songs.shift();
+            if (!serverQueue.loop)
+                serverQueue.songs.shift();
             if (serverQueue.songs.length === 0) {
                 serverQueue.playing = false;
                 return serverQueue.textChannel.send("No more songs in queue, leaving voice channel in 1 hour...");
             }
-            // Wait two seconds before playing next song
+            // Wait a bit before playing next song
             setTimeout(function () {
                 play(guild, serverQueue.songs[0]);
             }, 1500);
