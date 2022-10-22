@@ -5,6 +5,9 @@ const ytpl = require("ytpl");
 const main = require("../index");
 const queue = require("../index.js").queue;
 const wait = require('node:timers/promises').setTimeout;
+const fetch = require('isomorphic-unfetch');
+const { getPreview, getTracks } = require('spotify-url-info')(fetch);
+const youTube = require("youtube-sr").default;
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -28,14 +31,31 @@ module.exports = {
         }
 
         const failedSongs = [];
-        const songURL = interaction.options.getString('song');
+        let songURL = interaction.options.getString('song');
         let songInfo;
 
         interaction.deferReply();
 
+        // Checking if song is from spotify
+        if (songURL.includes("spotify")) {
+            // Check if the song is a playlist
+            if (songURL.includes("playlist")) {
+                await wait(1000);
+                return await interaction.editReply({ embeds: [ new EmbedBuilder().setTitle("Playlist from spotify are currently unsupported").setColor(0x0000ff) ] });
+            } else {
+                const spotifySong = await getPreview(songURL);
+                songURL = await youTube.searchOne(spotifySong.title + " " + spotifySong.artists);
+            }
+        }
+
         // Get all songs from the playlist if the URL is a playlist
         if (songURL.includes("list=")) {
             // Get the playlist ID from the URL
+            // Check if link is from a video of a playlist
+            if (songURL.includes("watch" || "index=")) {
+                await wait(1000);
+                return await interaction.editReply({ embeds: [ new EmbedBuilder().setTitle("Please provide a valid playlist link!").setColor(0x0000ff) ] });
+            }
             const playlistID = songURL.split("list=")[1];
             var playlist;
             try {
@@ -50,7 +70,6 @@ module.exports = {
                 .setTitle('ADDED PLAYLIST')
                 .setColor(0x0000ff)
                 .setDescription(`:white_check_mark: \`Here we go\``)
-                .setThumbnail(interaction.member.user.avatarURL())
                 .addFields( { name: "ㅤ", value: `Added by ${interaction.member} | Songs: ${songInfo.length}`} );
             serverQueue = await queue.get(interaction.guild.id);
             if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
@@ -70,7 +89,8 @@ module.exports = {
                     title: firstSong.videoDetails.title,
                     url: firstSong.videoDetails.video_url,
                     duration: firstSong.videoDetails.lengthSeconds,
-                    requestedBy: interaction.member,
+                    requestedBy: interaction,
+                    thumbnail: firstSong.videoDetails.thumbnails[0].url
                 };
                 const queueContruct = {
                     textChannel: interaction.channel,
@@ -107,10 +127,13 @@ module.exports = {
                     const song = {
                         title: null,
                         url: songInfo[i],
+                        duration: null,
+                        requestedBy: interaction,
+                        thumbnail: null
                     };
                     serverQueue.songs.push(song);
                 }
-                return await interaction.editReply("Added playlist to queue! " + (songInfo.length + 1) + " songs added!");
+                return await interaction.editReply({ embeds: [ addedPlaylistEmbed ] });
             } else {
                 // add each song to the queue
                 for (let i = 0; i < songInfo.length; i++) {
@@ -119,10 +142,11 @@ module.exports = {
                         url: songInfo[i],
                         duration: null,
                         requestedBy: interaction.member,
+                        thumbnail: null
                     };
                     serverQueue.songs.push(song);
                 }
-                return await interaction.editReply("Added playlist to queue! " + (songInfo.length + 1) + " songs added!" + failedSongs.join("\n"));
+                return await interaction.editReply({ embeds: [ addedPlaylistEmbed ] });
             }
         } else {
             try {
@@ -138,13 +162,14 @@ module.exports = {
                 url: songInfo.videoDetails.video_url,
                 duration: songInfo.videoDetails.lengthSeconds,
                 requestedBy: interaction,
+                thumbnail: songInfo.videoDetails.thumbnails[0].url
             };
             // Create the added to queue embed
             const addedToQueueEmbed = new EmbedBuilder()
                 .setTitle('ADDED TO QUEUE')
                 .setColor(0x0000ff)
                 .setDescription(`:white_check_mark: \`${song.title}\``)
-                .setThumbnail(interaction.member.user.avatarURL())
+                .setThumbnail(song.thumbnail)
                 .addFields( { name: "ㅤ", value: `Added by ${interaction.member} | Duration: \`❯ ${await main.convertSecondsToTime(song.duration)}\``} );
             if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
                 serverQueue.songs.length === 0) {

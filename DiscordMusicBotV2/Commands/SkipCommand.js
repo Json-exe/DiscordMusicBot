@@ -1,4 +1,4 @@
-const {SlashCommandBuilder} = require('discord.js');
+const {SlashCommandBuilder, EmbedBuilder} = require('discord.js');
 const main = require("../index");
 const {getVoiceConnection} = require("@discordjs/voice");
 
@@ -23,15 +23,26 @@ module.exports = {
             return await interaction.reply("You have to be in the same voice channel as the bot to skip songs!");
 
         // Skip the given number of songs
-        const skipCount = interaction.options.getInteger('amount');
-        if (skipCount > serverQueue.songs.length) {
-            return await interaction.reply(`There are only ${serverQueue.songs.length} songs in the queue!`);
-        } else if (skipCount < 1) {
-            return await interaction.reply("You can't skip less than 1 song!");
+        // Check if interaction.options.getInteger('amount') is null
+        if (interaction?.options?.getInteger('amount') !== undefined) {
+            const skipCount = interaction.options.getInteger('amount');
+            if (skipCount > serverQueue.songs.length) {
+                return await interaction.reply(`There are only ${serverQueue.songs.length} songs in the queue!`);
+            } else if (skipCount < 1) {
+                return await interaction.reply("You can't skip less than 1 song!");
+            } else {
+                serverQueue.songs.splice(0, skipCount);
+                await main.play(interaction.guild, serverQueue.songs[0]);
+                return await interaction.reply({ embeds: [ new EmbedBuilder().setTitle(`Skipped ${skipCount} songs.`).setColor(0x0000ff) ] });
+            }
         } else {
-            serverQueue.songs.splice(0, skipCount);
+            // Check if there is a song to skip
+            if (serverQueue.songs.length === 1) {
+                return await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("There is no song to skip!").setColor(0xff0000) ] });
+            }
+            serverQueue.songs.shift();
             await main.play(interaction.guild, serverQueue.songs[0]);
-            return await interaction.reply(`Skipped ${skipCount} songs!`);
+            return await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Skipped the current song.").setColor(0x0000ff) ] });
         }
     }
 }
