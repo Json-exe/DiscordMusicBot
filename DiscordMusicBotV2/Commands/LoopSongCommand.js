@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -7,6 +7,6 @@ module.exports = {
     async execute(interaction, serverQueue) {
         if (!serverQueue) return await interaction.reply('There is no song playing right now!');
         serverQueue.loop = !serverQueue.loop;
-        await interaction.reply(`Looping is now ${serverQueue.loop ? 'enabled' : 'disabled'}.`);
+        await interaction.reply({ embeds: [ new EmbedBuilder().setTitle(`Looping ${serverQueue.loop ? 'enabled' : 'disabled'}.`).setColor(0x0000ff) ] });
     }
 }

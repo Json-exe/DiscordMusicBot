@@ -1,9 +1,10 @@
-const {SlashCommandBuilder} = require('discord.js');
+const {SlashCommandBuilder, EmbedBuilder} = require('discord.js');
 const {VoiceConnectionStatus, joinVoiceChannel} = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 const ytpl = require("ytpl");
 const main = require("../index");
 const queue = require("../index.js").queue;
+const wait = require('node:timers/promises').setTimeout;
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,15 +14,15 @@ module.exports = {
     async execute(interaction, serverQueue) {
         const voiceChannel = await interaction.member.voice.channel;
         if (!voiceChannel)
-            return await interaction.reply(
+            return await interaction.editReply(
                 "You need to be in a voice channel to play music!"
             );
 
-        if (!voiceChannel.joinable) return await interaction.reply('I cannot join your voice channel! Check the permissions please!');
+        if (!voiceChannel.joinable) return await interaction.editReply('I cannot join your voice channel! Check the permissions please!');
 
         const permissions = await voiceChannel.permissionsFor(interaction.client.user);
         if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-            return await interaction.reply(
+            return await interaction.editReply(
                 "I need the permissions to join and speak in your voice channel!"
             );
         }
@@ -38,12 +39,19 @@ module.exports = {
             const playlistID = songURL.split("list=")[1];
             var playlist;
             try {
-                playlist = await ytpl(playlistID);
+                playlist = await ytpl(playlistID, { limit: Infinity });
             } catch (error) {
                 await console.log(error);
+                await wait(2000);
                 return await interaction.editReply("Failed to load Playlist. Please check the URL and try again!");
             }
             songInfo = playlist.items.map(item => item.url);
+            const addedPlaylistEmbed = new EmbedBuilder()
+                .setTitle('ADDED PLAYLIST')
+                .setColor(0x0000ff)
+                .setDescription(`:white_check_mark: \`Here we go\``)
+                .setThumbnail(interaction.member.user.avatarURL())
+                .addFields( { name: "ㅤ", value: `Added by ${interaction.member} | Songs: ${songInfo.length}`} );
             serverQueue = await queue.get(interaction.guild.id);
             if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
                 serverQueue.songs.length === 0) {
@@ -61,6 +69,8 @@ module.exports = {
                 const song = {
                     title: firstSong.videoDetails.title,
                     url: firstSong.videoDetails.video_url,
+                    duration: firstSong.videoDetails.lengthSeconds,
+                    requestedBy: interaction.member,
                 };
                 const queueContruct = {
                     textChannel: interaction.channel,
@@ -100,13 +110,15 @@ module.exports = {
                     };
                     serverQueue.songs.push(song);
                 }
-                return await interaction.followUp("Added playlist to queue! " + (songInfo.length + 1) + " songs added!");
+                return await interaction.editReply("Added playlist to queue! " + (songInfo.length + 1) + " songs added!");
             } else {
                 // add each song to the queue
                 for (let i = 0; i < songInfo.length; i++) {
                     const song = {
                         title: null,
                         url: songInfo[i],
+                        duration: null,
+                        requestedBy: interaction.member,
                     };
                     serverQueue.songs.push(song);
                 }
@@ -118,12 +130,22 @@ module.exports = {
                 await console.log("Got song info");
             } catch (error) {
                 await console.log(error);
+                await wait(2000);
                 return await interaction.editReply("Song info not found, try checking the URL!");
             }
             const song = {
                 title: songInfo.videoDetails.title,
                 url: songInfo.videoDetails.video_url,
+                duration: songInfo.videoDetails.lengthSeconds,
+                requestedBy: interaction,
             };
+            // Create the added to queue embed
+            const addedToQueueEmbed = new EmbedBuilder()
+                .setTitle('ADDED TO QUEUE')
+                .setColor(0x0000ff)
+                .setDescription(`:white_check_mark: \`${song.title}\``)
+                .setThumbnail(interaction.member.user.avatarURL())
+                .addFields( { name: "ㅤ", value: `Added by ${interaction.member} | Duration: \`❯ ${await main.convertSecondsToTime(song.duration)}\``} );
             if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
                 serverQueue.songs.length === 0) {
                 // Check if connection is destroyed
@@ -150,7 +172,8 @@ module.exports = {
                     queueContruct.connection = connection;
                     await console.log("Joined Voice Channel " + channel.name);
                     await main.play(interaction.guild, queueContruct.songs[0]);
-                    return await interaction.editReply("Added song " + song.title + " to queue!");
+                    return await interaction.editReply({ embeds: [addedToQueueEmbed] });
+                    //return await interaction.editReply("Added song " + song.title + " to queue!");
                 } catch (err) {
                     await console.log(err);
                     queue.delete(interaction.guild.id);
@@ -158,7 +181,7 @@ module.exports = {
                 }
             } else {
                 serverQueue.songs.push(song);
-                return await interaction.editReply(`${song.title} has been added to the queue!`);
+                return await interaction.editReply({ embeds: [addedToQueueEmbed] });
             }
         }
     }

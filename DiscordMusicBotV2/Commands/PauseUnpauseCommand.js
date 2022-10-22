@@ -1,4 +1,4 @@
-const {SlashCommandBuilder} = require('discord.js');
+const {SlashCommandBuilder, EmbedBuilder} = require('discord.js');
 const {getVoiceConnection} = require("@discordjs/voice");
 
 module.exports = {
@@ -17,11 +17,11 @@ module.exports = {
         if (serverQueue.playing) {
             serverQueue.playing = false;
             serverQueue.audioPlayer.pause();
-            await interaction.reply("Song paused!");
+            await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Audio Player paused.").setColor(0x0000ff) ] });
         } else {
             serverQueue.playing = true;
             serverQueue.audioPlayer.unpause();
-            await interaction.reply("Song unpaused!");
+            await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Audio Player unpause.").setColor(0x0000ff) ] });
         }
     }
 }

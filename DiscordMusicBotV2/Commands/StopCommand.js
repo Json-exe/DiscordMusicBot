@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder} = require('discord.js');
 const {getVoiceConnection} = require("@discordjs/voice");
 const main = require("../index.js");
 
@@ -30,6 +30,6 @@ module.exports = {
         serverQueue.songs = [];
         serverQueue.connection.destroy();
         serverQueue.audioPlayer = null;
-        await interaction.reply("Destroyed the player!");
+        await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Destroyed the player!").setColor(0x0000ff) ] });
     }
 }

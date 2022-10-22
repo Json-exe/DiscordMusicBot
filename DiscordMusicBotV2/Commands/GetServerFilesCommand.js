@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder} = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,9 +13,9 @@ module.exports = {
             const files = fs.readdirSync(dir).filter(file => file.endsWith('.mp3'));
             let response = "";
             for (const file of files) {
-                response += file + " | ";
+                response += "- " + file + "\n";
             }
-            await interaction.reply({ content: response, ephemeral: true });
+            await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Available music files:").setDescription(`${response}`).setColor(0x0000ff) ], ephemeral: true });
         } catch (e) {
             console.log(e);
         }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder} = require('discord.js');
 const {version, changelog} = require("../config.json");
 
 module.exports = {
@@ -6,6 +6,6 @@ module.exports = {
         .setName('changelog')
         .setDescription('Shows the changelog for the bot.'),
     async execute(interaction, serverQueue) {
-        await interaction.reply({content: "Current changelog (" + version + "): " + changelog, ephemeral: true});
+        await interaction.reply({ embeds: [ new EmbedBuilder().setTitle(`Current Changelog (${version}):`).setDescription(changelog).setColor(0x0000ff) ], ephemeral: true});
     }
 }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder} = require('discord.js');
 const {joinVoiceChannel} = require("@discordjs/voice");
 
 module.exports = {
@@ -17,6 +17,6 @@ module.exports = {
             selfMute: false
         });
         await console.log("Joined Voice Channel " + channel.name);
-        await interaction.reply('Joined your voice channel!');
+        await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Joined Voice Channel :thumbsup:").setColor(0x00ff00) ], ephemeral: true });
     }
 }
