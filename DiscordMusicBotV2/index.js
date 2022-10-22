@@ -3,7 +3,7 @@ const path = require('node:path');
 const {
     Client,
     GatewayIntentBits,
-    Collection, EmbedBuilder
+    Collection, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle
 } = require('discord.js');
 const {token, version} = require('./config.json');
 const fs = require('node:fs');
@@ -17,9 +17,6 @@ const {
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 const {generateDependencyReport} = require('@discordjs/voice');
-/*const fetch = require('isomorphic-unfetch');
-const { getPreview, getTracks } = require('spotify-url-info')(fetch);
-const youTube = require("youtube-sr").default;*/
 
 const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates]});
 
@@ -104,6 +101,24 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isButton()) return;
+    const serverQueue = await queue.get(interaction.guild.id);
+    if (interaction.customId === "pause"){
+        const pauseUnpause = require('./Commands/PauseUnpauseCommand');
+        await pauseUnpause.execute(interaction, serverQueue);
+    } else if (interaction.customId === "stop") {
+        const stop = require('./Commands/StopCommand');
+        await stop.execute(interaction, serverQueue);
+    } else if (interaction.customId === "skip") {
+        const skip = require('./Commands/SkipCommand');
+        await skip.execute(interaction, serverQueue);
+    } else if (interaction.customId === "loop") {
+        const loop = require('./Commands/LoopSongCommand');
+        await loop.execute(interaction, serverQueue);
+    }
+});
+
 module.exports.x = x;
 var x;
 
@@ -167,7 +182,7 @@ async function play(guild, song) {
     serverQueue.playing = true;
 
     try {
-        if (song.title === null || song.duration === null) {
+        if (song.title === null || song.duration === null || song.thumbnail === null) {
             // Check if url is a playlist
             if (song.url.includes("list=")) {
                 // Get only the video id
@@ -176,6 +191,7 @@ async function play(guild, song) {
             const info = await ytdl.getInfo(song.url);
             song.title = info.videoDetails.title;
             song.duration = info.videoDetails.lengthSeconds;
+            song.thumbnail = info.videoDetails.thumbnails[0].url;
         }
 
         // Create Now Playing Embed
@@ -184,10 +200,30 @@ async function play(guild, song) {
             .setURL(song.url)
             .setColor(0x0000ff)
             .setDescription(`🖸 \`${song.title}\``)
-            .setThumbnail(song.requestedBy.member.user.avatarURL())
+            .setThumbnail(song.thumbnail)
             .addFields(
                 { name: ':microphone: Requested By', value: `${song.requestedBy.member}`, inline: true },
                 { name: '⏰ Duration', value: `${await convertSecondsToTime(song.duration)}`, inline: true },
+            );
+
+        const nowPlayingComponents = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('stop')
+                    .setLabel('Stop')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('pause')
+                    .setLabel('Pause')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('loop')
+                    .setLabel('Loop')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('skip')
+                    .setLabel('Skip')
+                    .setStyle(ButtonStyle.Success),
             );
 
         const stream = await ytdl(song.url, {
@@ -223,7 +259,8 @@ async function play(guild, song) {
             }, 1500);
         });
         await player.play(resource);
-        await serverQueue.textChannel.send({ embeds: [nowPlayingEmbed] });
+
+        await serverQueue.textChannel.send({ embeds: [nowPlayingEmbed], components: [nowPlayingComponents] });
     } catch (error) {
         await console.log(error);
         await serverQueue.textChannel.send(error.message);
