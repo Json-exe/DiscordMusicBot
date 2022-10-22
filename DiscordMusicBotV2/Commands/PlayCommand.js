@@ -68,7 +68,8 @@ module.exports = {
                     songs: [],
                     volume: 5,
                     playing: true,
-                    audioPlayer: null
+                    audioPlayer: null,
+                    loop: false
                 };
                 await queue.set(interaction.guild.id, queueContruct);
                 queueContruct.songs.push(song);
@@ -132,7 +133,8 @@ module.exports = {
                     songs: [],
                     volume: 5,
                     playing: true,
-                    audioPlayer: null
+                    audioPlayer: null,
+                    loop: false
                 };
                 await queue.set(interaction.guild.id, queueContruct);
                 queueContruct.songs.push(song);
