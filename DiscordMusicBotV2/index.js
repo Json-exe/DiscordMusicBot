@@ -3,7 +3,7 @@ const path = require('node:path');
 const {
     Client,
     GatewayIntentBits,
-    Collection
+    Collection, EmbedBuilder
 } = require('discord.js');
 const {token, version} = require('./config.json');
 const fs = require('node:fs');
@@ -167,14 +167,29 @@ async function play(guild, song) {
     serverQueue.playing = true;
 
     try {
-        if (song.title === null) {
+        if (song.title === null || song.duration === null) {
             // Check if url is a playlist
             if (song.url.includes("list=")) {
                 // Get only the video id
                 song.url = song.url.split("&list=")[0];
             }
-            song.title = (await ytdl.getBasicInfo(song.url)).videoDetails.title;
+            const info = await ytdl.getInfo(song.url);
+            song.title = info.videoDetails.title;
+            song.duration = info.videoDetails.lengthSeconds;
         }
+
+        // Create Now Playing Embed
+        const nowPlayingEmbed = new EmbedBuilder()
+            .setTitle('NOW PLAYING')
+            .setURL(song.url)
+            .setColor(0x0000ff)
+            .setDescription(`🖸 \`${song.title}\``)
+            .setThumbnail(song.requestedBy.member.user.avatarURL())
+            .addFields(
+                { name: ':microphone: Requested By', value: `${song.requestedBy.member}`, inline: true },
+                { name: '⏰ Duration', value: `${await convertSecondsToTime(song.duration)}`, inline: true },
+            );
+
         const stream = await ytdl(song.url, {
             filter: "audioonly",
             quality: 'highestaudio'
@@ -189,12 +204,11 @@ async function play(guild, song) {
         // await resource.volume.setVolume(serverQueue.volume / 5);
         await connection.subscribe(player);
         player.on(AudioPlayerStatus.Idle, () => {
-            console.log("AudioPlayerStatus.Idle -> Playing next song, if one exists");
             if (!serverQueue.loop)
                 serverQueue.songs.shift();
             if (serverQueue.songs.length === 0) {
                 serverQueue.playing = false;
-                return serverQueue.textChannel.send("No more songs in queue, leaving voice channel in 1 hour...");
+                return serverQueue.textChannel.send({ embeds: [ new EmbedBuilder().setTitle("No more songs in queue! Leaving in 1 Hour.").setColor(0x0000ff) ]});
             }
             // Wait a bit before playing next song
             setTimeout(function () {
@@ -202,23 +216,29 @@ async function play(guild, song) {
             }, 1500);
         }).on('error', error => {
             console.error(error);
-        }).on(AudioPlayerStatus.Playing, () => {
-            console.log("Playing");
-        }).on(AudioPlayerStatus.Paused, () => {
-            console.log("Paused");
         }).on(AudioPlayerStatus.AutoPaused, () => {
-            console.log("AutoPaused");
             // Resume the player after 1500 ms
             setTimeout(function () {
                 player.unpause();
             }, 1500);
         });
         await player.play(resource);
-        await serverQueue.textChannel.send(`Start playing: **${song.title}**`);
+        await serverQueue.textChannel.send({ embeds: [nowPlayingEmbed] });
     } catch (error) {
         await console.log(error);
         await serverQueue.textChannel.send(error.message);
     }
+}
+
+module.exports.convertSecondsToTime = convertSecondsToTime;
+async function convertSecondsToTime(time) {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time - (hours * 3600)) / 60);
+    const seconds = time - (hours * 3600) - (minutes * 60);
+    let result = (hours < 10 ? "0" + hours : hours);
+    result += ":" + (minutes < 10 ? "0" + minutes : minutes);
+    result += ":" + (seconds < 10 ? "0" + seconds : seconds);
+    return result;
 }
 
 client.login(token);
