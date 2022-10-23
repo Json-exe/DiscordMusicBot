@@ -6,7 +6,7 @@ const main = require("../index");
 const queue = require("../index.js").queue;
 const wait = require('node:timers/promises').setTimeout;
 const fetch = require('isomorphic-unfetch');
-const { getPreview, getTracks } = require('spotify-url-info')(fetch);
+const { getPreview, getTracks, getData } = require('spotify-url-info')(fetch);
 const youTube = require("youtube-sr").default;
 
 module.exports = {
@@ -40,11 +40,22 @@ module.exports = {
         if (songURL.includes("spotify")) {
             // Check if the song is a playlist
             if (songURL.includes("playlist")) {
+                // Get the playlist
                 await wait(1000);
                 return await interaction.editReply({ embeds: [ new EmbedBuilder().setTitle("Playlist from spotify are currently unsupported").setColor(0x0000ff) ] });
             } else {
                 const spotifySong = await getPreview(songURL);
-                songURL = await youTube.searchOne(spotifySong.title + " " + spotifySong.artists);
+                // Get all artists from the song to search on YouTube
+                let artists = "";
+                if (!spotifySong.artists) {
+                    artists = spotifySong.artist;
+                } else {
+                    for (let i = 0; i < spotifySong.artists.length; i++) {
+                        artists += spotifySong.artists[i].name + " ";
+                    }
+                }
+                const video = await youTube.searchOne(spotifySong.title + " " + artists);
+                songURL = video.url;
             }
         }
 

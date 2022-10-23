@@ -97,7 +97,10 @@ client.on('interactionCreate', async interaction => {
         await command.execute(interaction, serverQueue);
     } catch (error) {
         console.error(error);
-        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+        if (interaction.replied) {
+            return await interaction.followUp({content: "There was an error while executing the command!"});
+        }
+        return interaction.reply({content: 'There was an error while executing this command!', ephemeral: true});
     }
 });
 
@@ -122,16 +125,12 @@ client.on('interactionCreate', async interaction => {
 module.exports.x = x;
 var x;
 
-/*
 async function probeAndCreateResource(readableStream) {
     const {stream, type} = await demuxProbe(readableStream);
     return createAudioResource(stream, {
         inputType: type,
-        inlineVolume: true
     });
 }
-*/
-
 
 module.exports.play = play;
 async function play(guild, song) {
@@ -228,14 +227,19 @@ async function play(guild, song) {
 
         const stream = await ytdl(song.url, {
             filter: "audioonly",
-            quality: 'highestaudio'
+            quality: 'lowestaudio',
+            highWaterMark: 1 << 62,
+            dlChunkSize: 0,
+            bitrate: 96,
+            liveBuffer: 1 << 62,
+            fmt: 'mp3',
         });
         const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
         serverQueue.audioPlayer = player;
-        // const resource = await probeAndCreateResource(stream);
-        const resource = await createAudioResource(stream, {
-            inputType: StreamType.Arbitrary
-        });
+        const resource = await probeAndCreateResource(stream);
+        // const resource = await createAudioResource(stream, {
+        //     inputType: StreamType.Arbitrary
+        // });
         const connection = serverQueue.connection;
         // await resource.volume.setVolume(serverQueue.volume / 5);
         await connection.subscribe(player);
@@ -259,7 +263,6 @@ async function play(guild, song) {
             }, 1500);
         });
         await player.play(resource);
-
         await serverQueue.textChannel.send({ embeds: [nowPlayingEmbed], components: [nowPlayingComponents] });
     } catch (error) {
         await console.log(error);
