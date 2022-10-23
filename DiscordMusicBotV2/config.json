@@ -1,8 +1,8 @@
 {
   "clientId": "1028372176878964808",
   "addedGuildIds": ["805503440339992597", "921858362067533824"],
-  "changelog" : "\n- Some bug fixes \n- Eventually prevent ytdl connResetException",
+  "changelog" : "\n- Some bug fixes \n- Eventually prevent ytdl connResetException \n- Bot now leaves voice when no one is in the channel \n- Bot now self deafs when joining a voice channel",
   "token": "MTAyODM3MjE3Njg3ODk2NDgwOA.GOSPRD.0nSKtkquEyGaQtksZ3QgOiOxf0x4sclEd9xGDw",
-  "version": "V0.1.4.alpha"
+  "version": "V0.1.5.alpha"
 }
 
