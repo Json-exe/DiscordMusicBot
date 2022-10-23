@@ -7,9 +7,9 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     async execute(interaction, serverQueue) {
         try {
-            const fs = require('fs');
+            const fs = require('node:fs');
             const path = require('path');
-            const dir = path.join(__dirname, '..\\music');
+            const dir = path.join(__dirname, 'music');
             const files = fs.readdirSync(dir).filter(file => file.endsWith('.mp3'));
             let response = "";
             for (const file of files) {

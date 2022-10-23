@@ -178,6 +178,18 @@ async function play(guild, song) {
         });
     }
 
+    // get the channel the bot is in
+    const channel = await guild.me.voice.channel;
+    // Get the users in the channel
+    const users = await channel.members;
+    // Check if the bot is the only one in the channel
+    if (users.size === 1) {
+        // Destroy the queue.
+        await console.log("Bot is the only one in the channel, destroying queue...");
+        queue.delete(guild.id);
+        return;
+    }
+
     serverQueue.playing = true;
 
     try {

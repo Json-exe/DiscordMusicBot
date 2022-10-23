@@ -120,7 +120,7 @@ module.exports = {
                         channelId: channel.id,
                         guildId: channel.guild.id,
                         adapterCreator: await channel.guild.voiceAdapterCreator,
-                        selfDeaf: false,
+                        selfDeaf: true,
                         selfMute: false
                     });
                     await console.log("Joined Voice Channel " + channel.name);
@@ -202,7 +202,7 @@ module.exports = {
                         channelId: channel.id, // 994907171982692361
                         guildId: channel.guild.id, // 994907168484642928
                         adapterCreator: await channel.guild.voiceAdapterCreator,
-                        selfDeaf: false,
+                        selfDeaf: true,
                         selfMute: false
                     });
                     queueContruct.connection = connection;

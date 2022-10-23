@@ -257,3 +257,4 @@ dist
 # End of https://www.toptal.com/developers/gitignore/api/node,intellij
 DiscordMusicBotV2/music/EDM-HardstyleMixV1.mp3
 DiscordMusicBotV2/music/RandomMix.mp3
+DiscordMusicBotV2/Commands/music

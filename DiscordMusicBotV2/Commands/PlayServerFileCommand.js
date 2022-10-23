@@ -30,7 +30,7 @@ module.exports = {
             channelId: channel.id,
             guildId: channel.guild.id,
             adapterCreator: channel.guild.voiceAdapterCreator,
-            selfDeaf: false,
+            selfDeaf: true,
             selfMute: false
         });
         const player = createAudioPlayer({
@@ -38,7 +38,7 @@ module.exports = {
                 noSubscriber: NoSubscriberBehavior.Pause,
             },
         });
-        const path = join(__dirname, `..\\music\\${filename}.mp3`);
+        const path = join(__dirname, `music/${filename}.mp3`);
         // If the file does not exist, return
         if (!fs.existsSync(path)) {
             return await interaction.reply({content: "File not found!", ephemeral: true});
