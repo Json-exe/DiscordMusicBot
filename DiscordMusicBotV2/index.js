@@ -122,8 +122,8 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+let x;
 module.exports.x = x;
-var x;
 
 async function probeAndCreateResource(readableStream) {
     const {stream, type} = await demuxProbe(readableStream);
@@ -255,12 +255,23 @@ async function play(guild, song) {
         const connection = serverQueue.connection;
         // await resource.volume.setVolume(serverQueue.volume / 5);
         await connection.subscribe(player);
-        player.on(AudioPlayerStatus.Idle, () => {
+        player.on(AudioPlayerStatus.Idle, async () => {
             if (!serverQueue.loop)
                 serverQueue.songs.shift();
             if (serverQueue.songs.length === 0) {
                 serverQueue.playing = false;
-                return serverQueue.textChannel.send({ embeds: [ new EmbedBuilder().setTitle("No more songs in queue! Leaving in 1 Hour.").setColor(0x0000ff) ]});
+                var d = await new Date(Date.now());
+                d.setHours(d.getHours() + 1);
+                x = setInterval(function () {
+                    var now = new Date().getTime();
+                    var t = d - now;
+                    if (t < 0) {
+                        clearInterval(x);
+                        serverQueue.connection.destroy();
+                        queue.delete(guild.id);
+                    }
+                }, 1000);
+                return await serverQueue.textChannel.send({embeds: [new EmbedBuilder().setTitle("No more songs in queue! Leaving in 1 Hour.").setColor(0x0000ff)]});
             }
             // Wait a bit before playing next song
             setTimeout(function () {
