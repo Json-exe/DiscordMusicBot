@@ -17,6 +17,9 @@ const {
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 const {generateDependencyReport} = require('@discordjs/voice');
+const {default: youTube} = require("youtube-sr");
+const fetch = require("isomorphic-unfetch");
+const { getPreview } = require('spotify-url-info')(fetch);
 
 const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates]});
 
@@ -193,16 +196,31 @@ async function play(guild, song) {
     serverQueue.playing = true;
 
     try {
-        if (song.title === null || song.duration === null || song.thumbnail === null) {
-            // Check if url is a playlist
-            if (song.url.includes("list=")) {
-                // Get only the video id
-                song.url = song.url.split("&list=")[0];
+        if (song.url.includes("youtube")) {
+            if (song.title === null || song.duration === null || song.thumbnail === null) {
+                // Check if url is a playlist
+                if (song.url.includes("list=")) {
+                    // Get only the video id
+                    song.url = song.url.split("&list=")[0];
+                }
+                const info = await ytdl.getInfo(song.url);
+                song.title = info.videoDetails.title;
+                song.duration = info.videoDetails.lengthSeconds;
+                song.thumbnail = info.videoDetails.thumbnails[0].url;
             }
-            const info = await ytdl.getInfo(song.url);
-            song.title = info.videoDetails.title;
-            song.duration = info.videoDetails.lengthSeconds;
-            song.thumbnail = info.videoDetails.thumbnails[0].url;
+        } else {
+            const spotifySong = await getPreview(song.url);
+            // Get all artists from the song to search on YouTube
+            let artists = "";
+            if (!spotifySong.artists) {
+                artists = spotifySong.artist;
+            } else {
+                for (let i = 0; i < spotifySong.artists.length; i++) {
+                    artists += spotifySong.artists[i].name + " ";
+                }
+            }
+            const video = await youTube.searchOne(spotifySong.title + " " + artists);
+            song.url = video.url;
         }
 
         // Create Now Playing Embed
