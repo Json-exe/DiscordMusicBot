@@ -69,6 +69,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${playlistInfo.title}\``)
             .setThumbnail(playlistInfo.image)
+            .setDescription(`:warning: Only the 100 first songs will be added due to API limitations!`)
             .addFields( { name: "ㅤ", value: `Added by ${interaction.member} | Songs: ${playlist.length}`} );
         songInfo = playlist;
         if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
