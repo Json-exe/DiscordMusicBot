@@ -1,8 +1,8 @@
 {
   "clientId": "1028372176878964808",
   "addedGuildIds": ["805503440339992597", "921858362067533824"],
-  "changelog" : "\n- NEW: NOW SUPPORT FOR SPOTIFY PLAYLISTS! (Attention only Supporting up to 100 Songs atm!!) \n- Bot now leaves voice when no one is in the channel \n- Bot now self deafs when joining a voice channel",
+  "changelog" : "\n- NEW: NOW SUPPORT FOR SPOTIFY PLAYLISTS! (Attention only Supporting up to 100 Songs atm!!) \n- NEW YT-PLAYLIST SUPPORT: Now performance optimized and better! \n- Performance tweaks",
   "token": "MTAyODM3MjE3Njg3ODk2NDgwOA.GOSPRD.0nSKtkquEyGaQtksZ3QgOiOxf0x4sclEd9xGDw",
-  "version": "V0.1.6.alpha"
+  "version": "V0.2.0.alpha"
 }
 

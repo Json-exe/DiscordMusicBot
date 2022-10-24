@@ -6,9 +6,10 @@ const main = require("../index");
 const queue = require("../index.js").queue;
 const wait = require('node:timers/promises').setTimeout;
 const fetch = require('isomorphic-unfetch');
-const {play} = require("../index");
 const { getPreview, getTracks, getData } = require('spotify-url-info')(fetch);
 const youTube = require("youtube-sr").default;
+//const playdl = require('play-dl');
+const { playlist_info } = require('play-dl');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -171,41 +172,35 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             await wait(1000);
             return await interaction.editReply({ embeds: [ new EmbedBuilder().setTitle("Please provide a valid playlist link!").setColor(0x0000ff) ] });
         }
-        const playlistID = songURL.split("list=")[1];
-        var playlist;
+        //const playlistID = songURL.split("list=")[1];
+        let playlist;
+        let tracks;
         try {
-            playlist = await ytpl(playlistID, { limit: Infinity });
+            playlist = await playlist_info(songURL, { incomplete: true });
+            tracks = await playlist.all_videos();
         } catch (error) {
             await console.log(error);
             await wait(2000);
-            return await interaction.editReply("Failed to load Playlist. Please check the URL and try again!");
+            return await interaction.editReply("Failed to load Playlist. Please check the URL and try again! Error: " + error.message);
         }
-        songInfo = playlist.items.map(item => item.url);
+        // Get the fetched songs from the playlist
+        songInfo = tracks;
         const addedPlaylistEmbed = new EmbedBuilder()
             .setTitle('ADDED PLAYLIST')
             .setColor(0x0000ff)
-            .setDescription(`:white_check_mark: \`Here we go\``)
-            .addFields( { name: "ㅤ", value: `Added by ${interaction.member} | Songs: ${songInfo.length}`} );
+            .setDescription(`:white_check_mark: \`${playlist.title}\``)
+            .setThumbnail(playlist.thumbnail.url)
+            .addFields( { name: "ㅤ", value: `Added by ${interaction.member} | Songs: ${playlist.videoCount}`} );
         serverQueue = await queue.get(interaction.guild.id);
         if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
             serverQueue.songs.length === 0) {
-            try {
-                var firstSong = songInfo[0];
-                if (firstSong.includes("list=")) {
-                    // Get only the video id
-                    firstSong = firstSong.split("&list=")[0];
-                }
-                firstSong = await ytdl.getInfo(firstSong);
-            } catch (error) {
-                await console.error(error);
-                failedSongs.push("Failed adding song: " + firstSong);
-            }
+            var firstSong = songInfo[0];
             const song = {
-                title: firstSong.videoDetails.title,
-                url: firstSong.videoDetails.video_url,
-                duration: firstSong.videoDetails.lengthSeconds,
+                title: firstSong.title,
+                url: firstSong.url,
+                duration: firstSong.durationInSec,
                 requestedBy: interaction,
-                thumbnail: firstSong.videoDetails.thumbnails[0].url
+                thumbnail: firstSong.thumbnails[0].url
             };
             const queueContruct = {
                 textChannel: interaction.channel,
@@ -240,11 +235,11 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             serverQueue = await queue.get(interaction.guild.id);
             for (let i = 0; i < songInfo.length; i++) {
                 const song = {
-                    title: null,
-                    url: songInfo[i],
-                    duration: null,
+                    title: songInfo[i].title,
+                    url: songInfo[i].url,
+                    duration: songInfo[i].durationInSec,
                     requestedBy: interaction,
-                    thumbnail: null
+                    thumbnail: songInfo[i].thumbnails[0].url
                 };
                 serverQueue.songs.push(song);
             }
@@ -253,11 +248,11 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             // add each song to the queue
             for (let i = 0; i < songInfo.length; i++) {
                 const song = {
-                    title: null,
-                    url: songInfo[i],
-                    duration: null,
+                    title: songInfo[i].title,
+                    url: songInfo[i].url,
+                    duration: songInfo[i].durationInSec,
                     requestedBy: interaction.member,
-                    thumbnail: null
+                    thumbnail: songInfo[i].thumbnails[0].url
                 };
                 serverQueue.songs.push(song);
             }
