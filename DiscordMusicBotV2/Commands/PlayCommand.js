@@ -1,14 +1,12 @@
 const {SlashCommandBuilder, EmbedBuilder} = require('discord.js');
 const {VoiceConnectionStatus, joinVoiceChannel} = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
-const ytpl = require("ytpl");
 const main = require("../index");
 const queue = require("../index.js").queue;
 const wait = require('node:timers/promises').setTimeout;
 const fetch = require('isomorphic-unfetch');
-const { getPreview, getTracks, getData } = require('spotify-url-info')(fetch);
+const { getPreview, getTracks } = require('spotify-url-info')(fetch);
 const youTube = require("youtube-sr").default;
-//const playdl = require('play-dl');
 const { playlist_info } = require('play-dl');
 
 module.exports = {
