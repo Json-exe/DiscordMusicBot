@@ -54,8 +54,16 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
     // Check if the song is a playlist
     if (songURL.includes("playlist")) {
         // Get the playlist
-        const playlistInfo = await getPreview(songURL);
-        const playlist = await getTracks(songURL);
+        let playlistInfo;
+        let playlist;
+        try {
+            playlistInfo = await getPreview(songURL);
+            playlist = await getTracks(songURL);
+        } catch (error) {
+            console.log(error);
+            await wait(1000);
+            return await interaction.editReply({ embeds: [ new EmbedBuilder().setTitle("Please check URL/Playlist").setColor(0x0000ff).setDescription("Please check the provided URL or if the playlist is a public playlist!") ] });
+        }
         const addedPlaylistEmbed = new EmbedBuilder()
             .setTitle('ADDED PLAYLIST')
             .setColor(0x0000ff)
