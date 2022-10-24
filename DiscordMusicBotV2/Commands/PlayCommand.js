@@ -54,11 +54,13 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
     // Check if the song is a playlist
     if (songURL.includes("playlist")) {
         // Get the playlist
+        const playlistInfo = await getPreview(songURL);
         const playlist = await getTracks(songURL);
         const addedPlaylistEmbed = new EmbedBuilder()
             .setTitle('ADDED PLAYLIST')
             .setColor(0x0000ff)
-            .setDescription(`:white_check_mark: \`Adding your playlist\``)
+            .setDescription(`:white_check_mark: \`${playlistInfo.title}\``)
+            .setThumbnail(playlistInfo.image)
             .addFields( { name: "ㅤ", value: `Added by ${interaction.member} | Songs: ${playlist.length}`} );
         songInfo = playlist;
         if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
