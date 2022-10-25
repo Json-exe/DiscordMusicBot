@@ -1,5 +1,4 @@
 const path = require('node:path');
-
 const {
     Client,
     GatewayIntentBits,
@@ -17,9 +16,7 @@ const {
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 const {generateDependencyReport} = require('@discordjs/voice');
-const {default: youTube} = require("youtube-sr");
-const fetch = require("isomorphic-unfetch");
-const { getPreview } = require('spotify-url-info')(fetch);
+const {spotify, search} = require("play-dl");
 
 const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates]});
 
@@ -196,7 +193,7 @@ async function play(guild, song) {
     serverQueue.playing = true;
 
     try {
-        if (song.url.includes("youtube" || "spotify")) {
+        if (song.url.includes("youtube") || song.url.includes("spotify")) {
             if (song.url.includes("youtube")) {
                 if (song.title === null || song.duration === null || song.thumbnail === null) {
                     // Check if url is a playlist
@@ -210,18 +207,14 @@ async function play(guild, song) {
                     song.thumbnail = info.videoDetails.thumbnails[0].url;
                 }
             } else {
-                const spotifySong = await getPreview(song.url);
+                const spotifySong = await spotify(song.url);
                 // Get all artists from the song to search on YouTube
                 let artists = "";
-                if (!spotifySong.artists) {
-                    artists = spotifySong.artist;
-                } else {
-                    for (let i = 0; i < spotifySong.artists.length; i++) {
-                        artists += spotifySong.artists[i].name + " ";
-                    }
+                for (let i = 0; i < spotifySong.artists.length; i++) {
+                    artists += spotifySong.artists[i].name + " ";
                 }
-                const video = await youTube.searchOne(spotifySong.title + " " + artists);
-                song.url = video.url;
+                const video = await search(spotifySong.name + " " + artists, {limit: 1, unblurNSFWThumbnails: true});
+                song.url = video[0].url;
             }
 
             // Create Now Playing Embed
@@ -258,7 +251,7 @@ async function play(guild, song) {
 
             const stream = await ytdl(song.url, {
                 filter: "audioonly",
-                quality: 'lowestaudio',
+                quality: 'highestaudio',
                 highWaterMark: 1 << 62,
                 dlChunkSize: 0,
                 bitrate: 96,

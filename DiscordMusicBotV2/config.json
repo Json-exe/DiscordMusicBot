@@ -1,8 +1,8 @@
 {
   "clientId": "1028372176878964808",
   "addedGuildIds": ["805503440339992597", "921858362067533824"],
-  "changelog" : "\n- NEW: Now supporting external files and radio stations! \n- NEW: NOW SUPPORT FOR SPOTIFY PLAYLISTS! (Attention only Supporting up to 100 Songs atm!!) \n- NEW YT-PLAYLIST SUPPORT: Now performance optimized and better! \n- Performance tweaks",
+  "changelog" : "\n- NEW: Now supporting external files and radio stations! \n- NEW: Spotify support update! No limitations on playlist length now! \n- NEW YT-PLAYLIST SUPPORT: Now performance optimized and better! \n- Performance tweaks",
   "token": "MTAyODM3MjE3Njg3ODk2NDgwOA.GOSPRD.0nSKtkquEyGaQtksZ3QgOiOxf0x4sclEd9xGDw",
-  "version": "V0.2.1.alpha"
+  "version": "V0.2.3.alpha"
 }
 

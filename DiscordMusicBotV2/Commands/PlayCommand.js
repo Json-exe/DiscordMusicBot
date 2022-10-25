@@ -1,16 +1,12 @@
 const {SlashCommandBuilder, EmbedBuilder} = require('discord.js');
 const {
-    VoiceConnectionStatus, joinVoiceChannel, createAudioPlayer, NoSubscriberBehavior, createAudioResource,
+    VoiceConnectionStatus, joinVoiceChannel, createAudioResource,
     StreamType
 } = require("@discordjs/voice");
-const ytdl = require("ytdl-core");
 const main = require("../index");
 const queue = require("../index.js").queue;
 const wait = require('node:timers/promises').setTimeout;
-const fetch = require('isomorphic-unfetch');
-const {getPreview, getTracks} = require('spotify-url-info')(fetch);
-const youTube = require("youtube-sr").default;
-const {playlist_info} = require('play-dl');
+const {playlist_info, search, video_info, spotify, refreshToken, is_expired} = require('play-dl');
 
 async function playRemoteMP3(interaction, songURL, serverQueue) {
     // Get all songs from the playlist if the URL is a playlist
@@ -67,7 +63,7 @@ async function playRemoteMP3(interaction, songURL, serverQueue) {
         .setThumbnail(song.thumbnail)
         .addFields({
             name: "ㅤ",
-            value: `Added by ${interaction.member}`,
+            value: `Added by ${interaction.member} | Position: \`❯ ${serverQueue.songs.length}\``,
         });
     if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
         serverQueue.songs.length === 0) {
@@ -134,6 +130,9 @@ module.exports = {
 
         // Checking if song is from spotify
         if (songURL.includes("spotify")) {
+            if (is_expired()) {
+                await refreshToken();
+            }
             await spotifyLinks(interaction, songURL, serverQueue);
         } else if (songURL.includes("youtube")) {
             await youtubeLinks(interaction, songURL, serverQueue);
@@ -146,49 +145,50 @@ module.exports = {
 }
 
 async function spotifyLinks(interaction, songURL, serverQueue) {
-    let songInfo;
-    const failedSongs = [];
+    let firstSong;
     // Check if the song is a playlist
     if (songURL.includes("playlist")) {
         // Get the playlist
         let playlistInfo;
         let playlist;
         try {
-            playlistInfo = await getPreview(songURL);
-            playlist = await getTracks(songURL);
+            playlistInfo = await spotify(songURL);
+            playlist = await playlistInfo.all_tracks();
         } catch (error) {
             console.log(error);
             await wait(1000);
             return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Please check URL/Playlist").setColor(0x0000ff).setDescription("Please check the provided URL or if the playlist is a public playlist!")]});
         }
+        // Get the whole duration of all songs in the playlist
+        let playlistDuration = 0;
+        for (let i = 0; i < playlist.length; i++) {
+            playlistDuration += playlist[i].durationInSec;
+        }
         const addedPlaylistEmbed = new EmbedBuilder()
             .setTitle('ADDED PLAYLIST')
             .setColor(0x0000ff)
-            .setDescription(`:white_check_mark: \`${playlistInfo.title}\``)
-            .setThumbnail(playlistInfo.image)
-            .setDescription(`:warning: Only the 100 first songs will be added due to API limitations!`)
-            .addFields({name: "ㅤ", value: `Added by ${interaction.member} | Songs: ${playlist.length}`});
-        songInfo = playlist;
+            .setDescription(`:white_check_mark: \`${playlistInfo.name}\``)
+            .setThumbnail(playlistInfo.thumbnail.url)
+            .addFields({
+                name: "ㅤ",
+                value: `Added by ${interaction.member} | Songs: ${playlist.length} | Duration: ${await main.convertSecondsToTime(playlistDuration)}`
+            });
         if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
             serverQueue.songs.length === 0) {
             try {
-                var firstSong = playlist[0];
+                firstSong = playlist[0];
                 // Get all artists from the song to search on YouTube
                 let artists = "";
-                if (!firstSong.artists) {
-                    artists = firstSong.artist;
-                } else {
-                    for (let i = 0; i < firstSong.artists.length; i++) {
-                        artists += firstSong.artists[i].name + " ";
-                    }
+                for (let i = 0; i < firstSong.artists.length; i++) {
+                    artists += firstSong.artists[i].name + " ";
                 }
-                firstSong = await youTube.searchOne(firstSong.name + " " + artists);
+                firstSong = await search(firstSong.name + " " + artists, {limit: 1, unblurNSFWThumbnails: true});
                 const song = {
-                    title: firstSong.title,
-                    url: firstSong.url,
-                    duration: Math.round(firstSong.duration / 1000),
+                    title: firstSong[0].title + " - " + artists,
+                    url: firstSong[0].url,
+                    duration: firstSong[0].durationInSec,
                     requestedBy: interaction,
-                    thumbnail: firstSong.thumbnail.url
+                    thumbnail: firstSong[0].thumbnails[0].url
                 };
                 const queueContruct = {
                     textChannel: interaction.channel,
@@ -219,33 +219,41 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                     return await interaction.editReply(err);
                 }
                 // Remove the first song from the array
-                songInfo.shift();
+                playlist.shift();
                 serverQueue = await queue.get(interaction.guild.id);
-                for (let i = 0; i < songInfo.length; i++) {
+
+                for (let i = 0; i < playlist.length; i++) {
+                    let artists = "";
+                    for (let j = 0; j < playlist[i].artists.length; j++) {
+                        artists += firstSong[i].artists[j].name + ", ";
+                    }
                     const song = {
-                        title: songInfo[i].name,
-                        url: songInfo[i].external_urls.spotify,
-                        duration: Math.round(songInfo[i].duration_ms / 1000),
+                        title: playlist[i].name,
+                        url: playlist[i].url,
+                        duration: playlist[i].durationInSec,
                         requestedBy: interaction,
-                        thumbnail: songInfo[i].album.images[0].url
+                        thumbnail: playlist[i].thumbnail.url
                     };
                     serverQueue.songs.push(song);
                 }
                 return await interaction.editReply({embeds: [addedPlaylistEmbed]});
             } catch (error) {
                 await console.error(error);
-                failedSongs.push("Failed adding song: " + firstSong);
             }
         } else {
             // Loop through the playlist
             for (let i = 0; i < playlist.length; i++) {
+                let artists = "";
+                for (let j = 0; j < playlist[i].artists.length; j++) {
+                    artists += playlist[i].artists[j].name + ", ";
+                }
                 // Get the url of the song and add it to the queue
                 const song = {
-                    title: playlist[i].name,
-                    url: playlist[i].external_urls.spotify,
-                    duration: Math.round(playlist[i].duration_ms / 1000),
+                    title: playlist[i].name + " - " + playlist[i].artists[0].name,
+                    url: playlist[i].url,
+                    duration: playlist[i].durationInSec,
                     requestedBy: interaction,
-                    thumbnail: playlist[i].album.images[0].url
+                    thumbnail: playlist[i].thumbnail.url
                 };
                 serverQueue.songs.push(song);
             }
@@ -253,19 +261,67 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             return await interaction.editReply({embeds: [addedPlaylistEmbed]});
         }
     } else {
-        const spotifySong = await getPreview(songURL);
+        const spotifySong = await spotify(songURL);
         // Get all artists from the song to search on YouTube
         let artists = "";
-        if (!spotifySong.artists) {
-            artists = spotifySong.artist;
-        } else {
-            for (let i = 0; i < spotifySong.artists.length; i++) {
-                artists += spotifySong.artists[i].name + " ";
-            }
+        for (let i = 0; i < spotifySong.artists.length; i++) {
+            artists += spotifySong.artists[i].name + " ";
         }
-        const video = await youTube.searchOne(spotifySong.title + " " + artists);
-        songURL = video.url;
-        await youtubeLinks(interaction, songURL, serverQueue)
+        const video = await search(spotifySong.name + " " + artists, {limit: 1, unblurNSFWThumbnails: true});
+        const song = {
+            title: video[0].title,
+            url: video[0].url,
+            duration: video[0].durationInSec,
+            requestedBy: interaction,
+            thumbnail: video[0].thumbnails[0].url
+        };
+        // Create the added to queue embed
+        const addedToQueueEmbed = new EmbedBuilder()
+            .setTitle('ADDED TO QUEUE')
+            .setColor(0x0000ff)
+            .setDescription(`:white_check_mark: \`${song.title}\``)
+            .setThumbnail(song.thumbnail)
+            .addFields({
+                name: "ㅤ",
+                value: `Added by ${interaction.member} | Duration: \`❯ ${await main.convertSecondsToTime(song.duration)}\` | Position: \`❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}\``
+            });
+        if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
+            serverQueue.songs.length === 0) {
+            // Check if connection is destroyed
+            const queueContruct = {
+                textChannel: interaction.channel,
+                connection: null,
+                songs: [],
+                volume: 5,
+                playing: true,
+                audioPlayer: null,
+                loop: false
+            };
+            await queue.set(interaction.guild.id, queueContruct);
+            queueContruct.songs.push(song);
+            try {
+                const channel = await interaction.member.voice.channel;
+                var connection = joinVoiceChannel({
+                    channelId: channel.id, // 994907171982692361
+                    guildId: channel.guild.id, // 994907168484642928
+                    adapterCreator: await channel.guild.voiceAdapterCreator,
+                    selfDeaf: true,
+                    selfMute: false
+                });
+                queueContruct.connection = connection;
+                await console.log("Joined Voice Channel " + channel.name);
+                await main.play(interaction.guild, queueContruct.songs[0]);
+                return await interaction.editReply({embeds: [addedToQueueEmbed]});
+                //return await interaction.editReply("Added song " + song.title + " to queue!");
+            } catch (err) {
+                await console.log(err);
+                queue.delete(interaction.guild.id);
+                return await interaction.editReply("Error Occurred: " + err);
+            }
+        } else {
+            serverQueue.songs.push(song);
+            return await interaction.editReply({embeds: [addedToQueueEmbed]});
+        }
     }
 }
 
@@ -368,19 +424,30 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
         }
     } else {
         try {
-            songInfo = await ytdl.getInfo(songURL);
-            await console.log("Got song info");
+            songInfo = await video_info(songURL);
         } catch (error) {
-            await console.log(error);
-            await wait(2000);
-            return await interaction.editReply("Song info not found, try checking the URL!");
+            // While error is a TypeError retry the request
+            if (error instanceof TypeError) {
+                await wait(500);
+                try {
+                    songInfo = await video_info(songURL);
+                } catch (error) {
+                    await console.log(error);
+                    await wait(1000);
+                    return await interaction.editReply("Failed to load Song. Please check the URL and try again! Error: " + error.message);
+                }
+            } else {
+                await console.log(error);
+                await wait(1000);
+                return await interaction.editReply("Song info not found, try checking the URL! Or try again.");
+            }
         }
         const song = {
-            title: songInfo.videoDetails.title,
-            url: songInfo.videoDetails.video_url,
-            duration: songInfo.videoDetails.lengthSeconds,
+            title: songInfo.video_details.title,
+            url: songInfo.video_details.url,
+            duration: songInfo.video_details.durationInSec,
             requestedBy: interaction,
-            thumbnail: songInfo.videoDetails.thumbnails[0].url
+            thumbnail: songInfo.video_details.thumbnails[0].url
         };
         // Create the added to queue embed
         const addedToQueueEmbed = new EmbedBuilder()
@@ -390,7 +457,7 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             .setThumbnail(song.thumbnail)
             .addFields({
                 name: "ㅤ",
-                value: `Added by ${interaction.member} | Duration: \`❯ ${await main.convertSecondsToTime(song.duration)}\``
+                value: `Added by ${interaction.member} | Duration: \`❯ ${await main.convertSecondsToTime(song.duration)}\` | Position: \`❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}\` `
             });
         if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
             serverQueue.songs.length === 0) {
