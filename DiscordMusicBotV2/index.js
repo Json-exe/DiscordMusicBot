@@ -196,115 +196,202 @@ async function play(guild, song) {
     serverQueue.playing = true;
 
     try {
-        if (song.url.includes("youtube")) {
-            if (song.title === null || song.duration === null || song.thumbnail === null) {
-                // Check if url is a playlist
-                if (song.url.includes("list=")) {
-                    // Get only the video id
-                    song.url = song.url.split("&list=")[0];
-                }
-                const info = await ytdl.getInfo(song.url);
-                song.title = info.videoDetails.title;
-                song.duration = info.videoDetails.lengthSeconds;
-                song.thumbnail = info.videoDetails.thumbnails[0].url;
-            }
-        } else {
-            const spotifySong = await getPreview(song.url);
-            // Get all artists from the song to search on YouTube
-            let artists = "";
-            if (!spotifySong.artists) {
-                artists = spotifySong.artist;
-            } else {
-                for (let i = 0; i < spotifySong.artists.length; i++) {
-                    artists += spotifySong.artists[i].name + " ";
-                }
-            }
-            const video = await youTube.searchOne(spotifySong.title + " " + artists);
-            song.url = video.url;
-        }
-
-        // Create Now Playing Embed
-        const nowPlayingEmbed = new EmbedBuilder()
-            .setTitle('NOW PLAYING')
-            .setURL(song.url)
-            .setColor(0x0000ff)
-            .setDescription(`🖸 \`${song.title}\``)
-            .setThumbnail(song.thumbnail)
-            .addFields(
-                { name: ':microphone: Requested By', value: `${song.requestedBy.member}`, inline: true },
-                { name: '⏰ Duration', value: `${await convertSecondsToTime(song.duration)}`, inline: true },
-            );
-
-        const nowPlayingComponents = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('stop')
-                    .setLabel('Stop')
-                    .setStyle(ButtonStyle.Danger),
-                new ButtonBuilder()
-                    .setCustomId('pause')
-                    .setLabel('Pause')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('loop')
-                    .setLabel('Loop')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('skip')
-                    .setLabel('Skip')
-                    .setStyle(ButtonStyle.Success),
-            );
-
-        const stream = await ytdl(song.url, {
-            filter: "audioonly",
-            quality: 'lowestaudio',
-            highWaterMark: 1 << 62,
-            dlChunkSize: 0,
-            bitrate: 96,
-            liveBuffer: 1 << 62,
-            fmt: 'mp3',
-        });
-        const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
-        serverQueue.audioPlayer = player;
-        const resource = await probeAndCreateResource(stream);
-        // const resource = await createAudioResource(stream, {
-        //     inputType: StreamType.Arbitrary
-        // });
-        const connection = serverQueue.connection;
-        // await resource.volume.setVolume(serverQueue.volume / 5);
-        await connection.subscribe(player);
-        player.on(AudioPlayerStatus.Idle, async () => {
-            if (!serverQueue.loop)
-                serverQueue.songs.shift();
-            if (serverQueue.songs.length === 0) {
-                serverQueue.playing = false;
-                var d = await new Date(Date.now());
-                d.setHours(d.getHours() + 1);
-                x = setInterval(function () {
-                    var now = new Date().getTime();
-                    var t = d - now;
-                    if (t < 0) {
-                        clearInterval(x);
-                        serverQueue.connection.destroy();
-                        queue.delete(guild.id);
+        if (song.url.includes("youtube" || "spotify")) {
+            if (song.url.includes("youtube")) {
+                if (song.title === null || song.duration === null || song.thumbnail === null) {
+                    // Check if url is a playlist
+                    if (song.url.includes("list=")) {
+                        // Get only the video id
+                        song.url = song.url.split("&list=")[0];
                     }
-                }, 1000);
-                return await serverQueue.textChannel.send({embeds: [new EmbedBuilder().setTitle("No more songs in queue! Leaving in 1 Hour.").setColor(0x0000ff)]});
+                    const info = await ytdl.getInfo(song.url);
+                    song.title = info.videoDetails.title;
+                    song.duration = info.videoDetails.lengthSeconds;
+                    song.thumbnail = info.videoDetails.thumbnails[0].url;
+                }
+            } else {
+                const spotifySong = await getPreview(song.url);
+                // Get all artists from the song to search on YouTube
+                let artists = "";
+                if (!spotifySong.artists) {
+                    artists = spotifySong.artist;
+                } else {
+                    for (let i = 0; i < spotifySong.artists.length; i++) {
+                        artists += spotifySong.artists[i].name + " ";
+                    }
+                }
+                const video = await youTube.searchOne(spotifySong.title + " " + artists);
+                song.url = video.url;
             }
-            // Wait a bit before playing next song
-            setTimeout(function () {
-                play(guild, serverQueue.songs[0]);
-            }, 1500);
-        }).on('error', error => {
-            console.error(error);
-        }).on(AudioPlayerStatus.AutoPaused, () => {
-            // Resume the player after 1500 ms
-            setTimeout(function () {
-                player.unpause();
-            }, 1500);
-        });
-        await player.play(resource);
-        await serverQueue.textChannel.send({ embeds: [nowPlayingEmbed], components: [nowPlayingComponents] });
+
+            // Create Now Playing Embed
+            const nowPlayingEmbed = new EmbedBuilder()
+                .setTitle('NOW PLAYING')
+                .setURL(song.url)
+                .setColor(0x0000ff)
+                .setDescription(`🖸 \`${song.title}\``)
+                .setThumbnail(song.thumbnail)
+                .addFields(
+                    { name: ':microphone: Requested By', value: `${song.requestedBy.member}`, inline: true },
+                    { name: '⏰ Duration', value: `${await convertSecondsToTime(song.duration)}`, inline: true },
+                );
+
+            const nowPlayingComponents = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('stop')
+                        .setLabel('Stop')
+                        .setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder()
+                        .setCustomId('pause')
+                        .setLabel('Pause')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('loop')
+                        .setLabel('Loop')
+                        .setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder()
+                        .setCustomId('skip')
+                        .setLabel('Skip')
+                        .setStyle(ButtonStyle.Success),
+                );
+
+            const stream = await ytdl(song.url, {
+                filter: "audioonly",
+                quality: 'lowestaudio',
+                highWaterMark: 1 << 62,
+                dlChunkSize: 0,
+                bitrate: 96,
+                liveBuffer: 1 << 62,
+                fmt: 'mp3',
+            });
+            const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
+            serverQueue.audioPlayer = player;
+            const resource = await probeAndCreateResource(stream);
+            const connection = serverQueue.connection;
+            // await resource.volume.setVolume(serverQueue.volume / 5);
+            await connection.subscribe(player);
+            player.on(AudioPlayerStatus.Idle, async () => {
+                if (!serverQueue.loop)
+                    serverQueue.songs.shift();
+                if (serverQueue.songs.length === 0) {
+                    serverQueue.playing = false;
+                    var d = await new Date(Date.now());
+                    d.setHours(d.getHours() + 1);
+                    x = setInterval(function () {
+                        var now = new Date().getTime();
+                        var t = d - now;
+                        if (t < 0) {
+                            clearInterval(x);
+                            serverQueue.connection.destroy();
+                            queue.delete(guild.id);
+                        }
+                    }, 1000);
+                    return await serverQueue.textChannel.send({embeds: [new EmbedBuilder().setTitle("No more songs in queue! Leaving in 1 Hour.").setColor(0x0000ff)]});
+                }
+                // Wait a bit before playing next song
+                setTimeout(function () {
+                    play(guild, serverQueue.songs[0]);
+                }, 1500);
+            }).on('error', error => {
+                console.error(error);
+            }).on(AudioPlayerStatus.AutoPaused, () => {
+                // Resume the player after 1500 ms
+                setTimeout(function () {
+                    player.unpause();
+                }, 1500);
+            });
+            await player.play(resource);
+            await serverQueue.textChannel.send({ embeds: [nowPlayingEmbed], components: [nowPlayingComponents] });
+        } else {
+            // Create Now Playing Embed
+            const nowPlayingEmbed = new EmbedBuilder()
+                .setTitle('NOW PLAYING')
+                .setURL(song.url)
+                .setColor(0x0000ff)
+                .setDescription(`🖸 \`${song.title}\``)
+                .setThumbnail(song.thumbnail)
+                .addFields(
+                    { name: ':microphone: Requested By', value: `${song.requestedBy.member}`, inline: true },
+                );
+            const nowPlayingComponents = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('stop')
+                        .setLabel('Stop')
+                        .setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder()
+                        .setCustomId('pause')
+                        .setLabel('Pause')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('loop')
+                        .setLabel('Loop')
+                        .setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder()
+                        .setCustomId('skip')
+                        .setLabel('Skip')
+                        .setStyle(ButtonStyle.Success),
+                );
+            let resource;
+            if (song.url.endsWith(".mp3")) {
+                resource = createAudioResource(song.url, {
+                    inputType: StreamType.Arbitrary,
+                    inlineVolume: true
+                });
+            } else if (song.url.endsWith(".ogg")) {
+                resource = createAudioResource(song.url, {
+                    inputType: StreamType.OggOpus,
+                    inlineVolume: true
+                });
+            } else if (song.url.endsWith(".webm")) {
+                resource = createAudioResource(song.url, {
+                    inputType: StreamType.WebmOpus,
+                    inlineVolume: true
+                });
+            } else {
+                resource = await createAudioResource(song.url, {
+                    inputType: StreamType.Arbitrary,
+                    inlineVolume: true,
+                });
+            }
+            const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
+            serverQueue.audioPlayer = player;
+            const connection = serverQueue.connection;
+            await connection.subscribe(player);
+            player.on(AudioPlayerStatus.Idle, async () => {
+                if (!serverQueue.loop)
+                    serverQueue.songs.shift();
+                if (serverQueue.songs.length === 0) {
+                    serverQueue.playing = false;
+                    var d = await new Date(Date.now());
+                    d.setHours(d.getHours() + 1);
+                    x = setInterval(function () {
+                        var now = new Date().getTime();
+                        var t = d - now;
+                        if (t < 0) {
+                            clearInterval(x);
+                            serverQueue.connection.destroy();
+                            queue.delete(guild.id);
+                        }
+                    }, 1000);
+                    return await serverQueue.textChannel.send({embeds: [new EmbedBuilder().setTitle("No more songs in queue! Leaving in 1 Hour.").setColor(0x0000ff)]});
+                }
+                // Wait a bit before playing next song
+                setTimeout(function () {
+                    play(guild, serverQueue.songs[0]);
+                }, 1500);
+            }).on('error', error => {
+                console.error(error);
+            }).on(AudioPlayerStatus.AutoPaused, () => {
+                // Resume the player after 1500 ms
+                setTimeout(function () {
+                    player.unpause();
+                }, 1500);
+            });
+            await player.play(resource);
+            await serverQueue.textChannel.send({ embeds: [nowPlayingEmbed], components: [nowPlayingComponents] });
+        }
     } catch (error) {
         await console.log(error);
         await serverQueue.textChannel.send(error.message);
