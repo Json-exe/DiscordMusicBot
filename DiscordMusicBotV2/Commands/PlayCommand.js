@@ -1,7 +1,7 @@
 const {SlashCommandBuilder, EmbedBuilder} = require('discord.js');
 const {
     VoiceConnectionStatus, joinVoiceChannel, createAudioResource,
-    StreamType
+    StreamType, createAudioPlayer, AudioPlayerStatus
 } = require("@discordjs/voice");
 const main = require("../index");
 const queue = require("../index.js").queue;
@@ -35,12 +35,31 @@ async function playRemoteMP3(interaction, songURL, serverQueue) {
                 inlineVolume: true,
             });
         }
-        await wait(1000);
-        console.log("Ended: " + resource.ended + " | " + "Readable: " + resource.readable + " | " + "Metadata: " + resource.metadata + " | " + "Started: " + resource.started);
-        if (resource.ended) {
-            console.log("Resource has already ended");
-            await interaction.editReply("The given url is not playable or the stream has ended!");
-            return;
+        await wait(1500);
+        // Create a player
+        const player = createAudioPlayer();
+        player.on('error', error => {
+            console.error(error);
+            return interaction.editReply("Failed to play your stream!");
+        }).on('stateChange', (oldState, newState) => {
+            console.log(`Player transitioned from ${oldState.status} to ${newState.status}`);
+            if (oldState.status === AudioPlayerStatus.Buffering && newState.status === AudioPlayerStatus.Playing) {
+                console.log("Changed from buffering to playing");
+            }
+        }).on('idle', () => {
+            console.log('Player is idle, stopping...');
+        }).on('playing', () => {
+            console.log('Player is playing!');
+        }).on('autopaused', () => {
+            wait(1000);
+            player.unpause();
+        });
+        await player.play(resource);
+        await wait(500);
+        const test = player.checkPlayable();
+        player.stop(true);
+        if (!test || resource.playStream._buffer.length <= 2 || resource.ended) {
+            return interaction.editReply("Failed to play your stream!");
         }
     } catch (error) {
         await console.log(error);
@@ -63,7 +82,7 @@ async function playRemoteMP3(interaction, songURL, serverQueue) {
         .setThumbnail(song.thumbnail)
         .addFields({
             name: "ㅤ",
-            value: `Added by ${interaction.member} | Position: \`❯ ${serverQueue.songs.length}\``,
+            value: `Added by ${interaction.member} | Position: \`❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}\``,
         });
     if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
         serverQueue.songs.length === 0) {
@@ -426,21 +445,9 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
         try {
             songInfo = await video_info(songURL);
         } catch (error) {
-            // While error is a TypeError retry the request
-            if (error instanceof TypeError) {
-                await wait(500);
-                try {
-                    songInfo = await video_info(songURL);
-                } catch (error) {
-                    await console.log(error);
-                    await wait(1000);
-                    return await interaction.editReply("Failed to load Song. Please check the URL and try again! Error: " + error.message);
-                }
-            } else {
-                await console.log(error);
-                await wait(1000);
-                return await interaction.editReply("Song info not found, try checking the URL! Or try again.");
-            }
+            await console.log(error);
+            await wait(1000);
+            return await interaction.editReply("Song info not found, try checking the URL! Or try again.");
         }
         const song = {
             title: songInfo.video_details.title,

@@ -17,10 +17,6 @@
     "libsodium-wrappers": "^0.7.10",
     "play-dl": "^1.9.5",
     "sodium-native": "^3.4.1",
-    "spotify-url-info": "^3.1.9",
-    "youtube-dl-exec": "^2.1.6",
-    "youtube-sr": "^4.3.4",
-    "ytdl-core": "^4.11.2",
-    "ytpl": "^2.3.0"
+    "ytdl-core": "^4.11.2"
   }
 }
