@@ -276,7 +276,10 @@ async function play(guild, song) {
                         var t = d - now;
                         if (t < 0) {
                             clearInterval(x);
-                            serverQueue.connection.destroy();
+                            // Check if the connection is already destroyed
+                            if (serverQueue?.connection?.state?.status !== VoiceConnectionStatus.Destroyed) {
+                                serverQueue.connection.destroy();
+                            }
                             queue.delete(guild.id);
                         }
                     }, 1000);

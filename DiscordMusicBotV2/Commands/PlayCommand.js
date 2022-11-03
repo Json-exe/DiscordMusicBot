@@ -35,7 +35,9 @@ async function playRemoteMP3(interaction, songURL, serverQueue) {
                 inlineVolume: true,
             });
         }
-        await wait(1500);
+
+        console.log("Creating player");
+
         // Create a player
         const player = createAudioPlayer();
         player.on('error', error => {
@@ -46,21 +48,23 @@ async function playRemoteMP3(interaction, songURL, serverQueue) {
             if (oldState.status === AudioPlayerStatus.Buffering && newState.status === AudioPlayerStatus.Playing) {
                 console.log("Changed from buffering to playing");
             }
-        }).on('idle', () => {
-            console.log('Player is idle, stopping...');
-        }).on('playing', () => {
-            console.log('Player is playing!');
         }).on('autopaused', () => {
             wait(1000);
             player.unpause();
+        }).on('buffering' , () => {
+            console.log("Buffering...");
         });
         await player.play(resource);
-        await wait(500);
         const test = player.checkPlayable();
-        player.stop(true);
-        if (!test || resource.playStream._buffer.length <= 2 || resource.ended) {
+        console.log(test);
+        console.log(resource.ended);
+        console.log(resource.read())
+        await wait(500);
+        if (!test || resource.ended) {
+            player.stop(true);
             return interaction.editReply("Failed to play your stream!");
         }
+        player.stop(true);
     } catch (error) {
         await console.log(error);
         await wait(2000);
