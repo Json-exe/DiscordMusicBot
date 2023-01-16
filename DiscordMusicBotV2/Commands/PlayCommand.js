@@ -42,7 +42,7 @@ module.exports = {
         } else if (songURL.includes("youtube")) {
             await youtubeLinks(interaction, songURL, serverQueue);
         } else {
-            await wait(1000);
+            await wait(800);
             return await interaction.editReply({ embeds: [ new EmbedBuilder().setTitle("Invalid URL Type. Bot only supports YT and Spotify Links!").setColor(0x0000ff) ] });
         }
     }
@@ -59,7 +59,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             playlistInfo = await spotify(songURL);
             playlist = await playlistInfo.all_tracks();
         } catch (error) {
-            console.log(error);
+            console.error(error);
             await wait(1000);
             return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Please check URL/Playlist").setColor(0x0000ff).setDescription("Please check the provided URL or if the playlist is a public playlist!")]});
         }
@@ -164,8 +164,19 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             await wait(1000);
             return await interaction.editReply({embeds: [addedPlaylistEmbed]});
         }
+    } else if (songURL.includes("album")) {
+        await wait(1000)
+        return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Unsupported link type").setColor(0x0000ff).setDescription("Spotify albums are currently not supported and will be implemented in a later update!")]} )
     } else {
-        const spotifySong = await spotify(songURL);
+        let spotifySong;
+        try {
+            spotifySong = await spotify(songURL);
+        }
+        catch (error) {
+            console.error(error);
+            await wait(500)
+            return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Please check URL/Playlist").setColor(0x0000ff).setDescription("Please check the provided URL or if the song is public! Song info could not be loaded!")]});
+        }
         // Get all artists from the song to search on YouTube
         let artists = "";
         for (let i = 0; i < spotifySong.artists.length; i++) {
