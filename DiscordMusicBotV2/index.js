@@ -142,11 +142,11 @@ async function play(guild, song) {
 
     if (!song) {
         serverQueue.playing = false;
-        var d = await new Date(Date.now());
+        let d = await new Date(Date.now());
         d.setHours(d.getHours() + 1);
         x = setInterval(function () {
-            var now = new Date().getTime();
-            var t = d - now;
+            let now = new Date().getTime();
+            let t = d - now;
             if (t < 0) {
                 clearInterval(x);
                 serverQueue.connection.destroy();
@@ -252,10 +252,10 @@ async function play(guild, song) {
             const stream = await ytdl(song.url, {
                 filter: "audioonly",
                 quality: 'highestaudio',
-                highWaterMark: 1 << 62,
+                highWaterMark: 1 << 30,
                 dlChunkSize: 0,
                 bitrate: 96,
-                liveBuffer: 1 << 62,
+                liveBuffer: 1 << 30,
                 fmt: 'mp3',
             });
             const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
@@ -269,11 +269,11 @@ async function play(guild, song) {
                     serverQueue.songs.shift();
                 if (serverQueue.songs.length === 0) {
                     serverQueue.playing = false;
-                    var d = await new Date(Date.now());
+                    let d = await new Date(Date.now());
                     d.setHours(d.getHours() + 1);
                     x = setInterval(function () {
-                        var now = new Date().getTime();
-                        var t = d - now;
+                        let now = new Date().getTime();
+                        let t = d - now;
                         if (t < 0) {
                             clearInterval(x);
                             // Check if the connection is already destroyed
@@ -360,11 +360,11 @@ async function play(guild, song) {
                     serverQueue.songs.shift();
                 if (serverQueue.songs.length === 0) {
                     serverQueue.playing = false;
-                    var d = await new Date(Date.now());
+                    let d = await new Date(Date.now());
                     d.setHours(d.getHours() + 1);
                     x = setInterval(function () {
-                        var now = new Date().getTime();
-                        var t = d - now;
+                        let now = new Date().getTime();
+                        let t = d - now;
                         if (t < 0) {
                             clearInterval(x);
                             serverQueue.connection.destroy();
@@ -405,4 +405,4 @@ async function convertSecondsToTime(time) {
     return result;
 }
 
-client.login(token);
+client.login(token).then(r => console.log("Logged in!"));

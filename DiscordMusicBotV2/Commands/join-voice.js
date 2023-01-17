@@ -9,7 +9,7 @@ module.exports = {
         const channel = interaction.member.voice.channel;
         if (!channel) return interaction.reply('You need to join a voice channel first!');
         if (!channel.joinable) return interaction.reply('I cannot join your voice channel! Check the permissions please!');
-        const connection = joinVoiceChannel({
+        joinVoiceChannel({
             channelId: channel.id,
             guildId: channel.guild.id,
             adapterCreator: channel.guild.voiceAdapterCreator,
