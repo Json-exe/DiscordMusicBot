@@ -129,7 +129,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                 for (let i = 0; i < playlist.length; i++) {
                     let artists = "";
                     for (let j = 0; j < playlist[i].artists.length; j++) {
-                        artists += firstSong[i].artists[j].name + ", ";
+                        artists += playlist[i]?.artists[j]?.name + ", ";
                     }
                     const song = {
                         title: playlist[i].name,
@@ -241,7 +241,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                 for (let i = 0; i < albumTracks.length; i++) {
                     let artists = "";
                     for (let j = 0; j < albumTracks[i].artists.length; j++) {
-                        artists += firstSong[i].artists[j].name + ", ";
+                        artists += albumTracks[i].artists[j].name + ", ";
                     }
                     const song = {
                         title: albumTracks[i].name,

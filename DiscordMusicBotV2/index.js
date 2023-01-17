@@ -207,14 +207,34 @@ async function play(guild, song) {
                     song.thumbnail = info.videoDetails.thumbnails[0].url;
                 }
             } else {
-                const spotifySong = await spotify(song.url);
-                // Get all artists from the song to search on YouTube
-                let artists = "";
-                for (let i = 0; i < spotifySong.artists.length; i++) {
-                    artists += spotifySong.artists[i].name + " ";
+                let retry = 0;
+                while (retry < 3) {
+                    try {
+                        const spotifySong = await spotify(song.url);
+                        // Get all artists from the song to search on YouTube
+                        let artists = "";
+                        for (let i = 0; i < spotifySong.artists.length; i++) {
+                            artists += spotifySong.artists[i].name + " ";
+                        }
+                        const video = await search(spotifySong.name + " " + artists, {limit: 1, unblurNSFWThumbnails: true});
+                        song.url = video[0].url;
+                        retry = 3;
+                    } catch (e) {
+                        console.error(e);
+                        retry++;
+                        if (retry === 3) {
+                            // Create Now Playing Embed
+                            const playFailed = new EmbedBuilder()
+                                .setTitle('SONG PLAY FAILED')
+                                .setURL(song.url)
+                                .setColor(0x0000ff)
+                                .setDescription(`🖸 \`${song.title}\` Song play failed! Please try again later. Error: ${e}`)
+                                .setThumbnail(song.thumbnail)
+                            serverQueue.songs.shift();
+                            return await serverQueue.textChannel.send( {embeds: playFailed } );
+                        }
+                    }
                 }
-                const video = await search(spotifySong.name + " " + artists, {limit: 1, unblurNSFWThumbnails: true});
-                song.url = video[0].url;
             }
 
             // Create Now Playing Embed
