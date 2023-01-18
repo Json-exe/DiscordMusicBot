@@ -272,10 +272,10 @@ async function play(guild, song) {
             const stream = await ytdl(song.url, {
                 filter: "audioonly",
                 quality: 'highestaudio',
-                highWaterMark: 1 << 64,
+                highWaterMark: 1 << 60,
                 dlChunkSize: 0,
                 bitrate: 96,
-                liveBuffer: 1 << 30,
+                liveBuffer: 1 << 60,
                 fmt: 'mp3',
             });
             const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
@@ -327,7 +327,7 @@ async function play(guild, song) {
                 .setDescription(`🖸 \`${song.title}\``)
                 .setThumbnail(song.thumbnail)
                 .addFields(
-                    { name: ':microphone: Requested By', value: `${song.requestedBy.member}`, inline: true },
+                    { name: ':microphone: Requested By', value: `${song.requestedBy.member}`, inline: true }
                 );
             const nowPlayingComponents = new ActionRowBuilder()
                 .addComponents(

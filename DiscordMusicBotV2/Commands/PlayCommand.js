@@ -132,9 +132,9 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setDescription(`:white_check_mark: \`${playlistInfo.name}\``)
             .setThumbnail(playlistInfo.thumbnail.url)
             .addFields(
-                {name: ":microphone:Added by", value: `${interaction.member}`},
-                {name: ":musical_note:Songs", value: `${playlist.length}`},
-                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(playlistDuration)}`}
+                {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
+                {name: ":musical_note:Songs", value: `${playlist.length}`, inline: true},
+                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(playlistDuration)}`, inline: true}
             );
         if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
             serverQueue.songs.length === 0) {
@@ -219,9 +219,9 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setDescription(`:white_check_mark: \`${spotifyAlbum.name}\``)
             .setThumbnail(spotifyAlbum.thumbnail.url)
             .addFields(
-                {name: ":microphone:Added by", value: `${interaction.member}`},
-                {name: ":musical_note:Songs", value: `${albumTracks.length}`},
-                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(albumDuration)}`}
+                {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
+                {name: ":musical_note:Songs", value: `${albumTracks.length}`, inline: true},
+                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(albumDuration)}`, inline: true}
             );
         if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
             serverQueue.songs.length === 0) {
@@ -313,10 +313,11 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${song.title}\``)
             .setThumbnail(song.thumbnail)
-            .addFields({
-                name: "ㅤ",
-                value: `Added by ${interaction.member} | Duration: \`❯ ${await main.convertSecondsToTime(song.duration)}\` | Position: \`❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}\``
-            });
+            .addFields(
+                {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
+                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},
+                {name: ":hash:Position", value: `❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}`, inline: true}
+            );
         await AddSingleSong(serverQueue, song, interaction, queueConstruct, addedToQueueEmbed);
     }
 }
@@ -364,9 +365,9 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             .setDescription(`:white_check_mark: \`${playlist.title}\``)
             .setThumbnail(playlist.thumbnail.url)
             .addFields(
-                {name: ":microphone:Added by", value: `${interaction.member}`},
-                {name: ":musical_note:Songs", value: `${playlist.videoCount}`},
-                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(playlistDuration)}`}
+                {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
+                {name: ":musical_note:Songs", value: `${playlist.videoCount}`, inline: true},
+                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(playlistDuration)}`, inline: true}
             );
         serverQueue = await queue.get(interaction.guild.id);
         if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
@@ -430,9 +431,9 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             .setDescription(`:white_check_mark: \`${song.title}\``)
             .setThumbnail(song.thumbnail)
             .addFields(
-                {name: ":microphone:Added by", value: `${interaction.member}`},
-                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`},
-                {name: ":hash:Position", value: `❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}`}
+                {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
+                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},
+                {name: ":hash:Position", value: `❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}`, inline: true}
             );
         await AddSingleSong(serverQueue, song, interaction, queueConstruct, addedToQueueEmbed);
     }
