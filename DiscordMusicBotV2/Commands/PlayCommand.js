@@ -47,9 +47,68 @@ module.exports = {
     }
 }
 
+async function InitFirstSong(interaction, song, queueConstruct) {
+    await queue.set(interaction.guild.id, queueConstruct);
+    queueConstruct.songs.push(song);
+    try {
+        const channel = await interaction.member.voice.channel;
+        queueConstruct.connection = joinVoiceChannel({
+            channelId: channel.id,
+            guildId: channel.guild.id,
+            adapterCreator: await channel.guild.voiceAdapterCreator,
+            selfDeaf: true,
+            selfMute: false
+        });
+        await console.log("Joined Voice Channel " + channel.name);
+        await main.play(interaction.guild, queueConstruct.songs[0]);
+    } catch (err) {
+        await console.log(err);
+        queue.delete(interaction.guild.id);
+        return await interaction.editReply(err);
+    }
+}
+
+async function AddSingleSong(serverQueue, song, interaction, queueConstruct, addedToQueueEmbed) {
+    if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
+        serverQueue.songs.length === 0) {
+        // Check if connection is destroyed
+        await queue.set(interaction.guild.id, queueConstruct);
+        queueConstruct.songs.push(song);
+        try {
+            const channel = await interaction.member.voice.channel;
+            queueConstruct.connection = joinVoiceChannel({
+                channelId: channel.id, // 994907171982692361
+                guildId: channel.guild.id, // 994907168484642928
+                adapterCreator: await channel.guild.voiceAdapterCreator,
+                selfDeaf: true,
+                selfMute: false
+            });
+            await console.log("Joined Voice Channel " + channel.name);
+            await main.play(interaction.guild, queueConstruct.songs[0]);
+            return await interaction.editReply({embeds: [addedToQueueEmbed]});
+            //return await interaction.editReply("Added song " + song.title + " to queue!");
+        } catch (err) {
+            await console.log(err);
+            queue.delete(interaction.guild.id);
+            return await interaction.editReply("Error Occurred: " + err);
+        }
+    } else {
+        serverQueue.songs.push(song);
+        return await interaction.editReply({embeds: [addedToQueueEmbed]});
+    }
+}
+
 async function spotifyLinks(interaction, songURL, serverQueue) {
-    let connection;
     let firstSong;
+    let queueConstruct = {
+        textChannel: interaction.channel,
+        connection: null,
+        songs: [],
+        volume: 5,
+        playing: true,
+        audioPlayer: null,
+        loop: false
+    };
     // Check if the song is a playlist
     if (songURL.includes("playlist")) {
         // Get the playlist
@@ -94,34 +153,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                     requestedBy: interaction,
                     thumbnail: firstSong[0].thumbnails[0].url
                 };
-                const queueConstruct = {
-                    textChannel: interaction.channel,
-                    connection: null,
-                    songs: [],
-                    volume: 5,
-                    playing: true,
-                    audioPlayer: null,
-                    loop: false
-                };
-                await queue.set(interaction.guild.id, queueConstruct);
-                queueConstruct.songs.push(song);
-                try {
-                    const channel = await interaction.member.voice.channel;
-                    connection = joinVoiceChannel({
-                        channelId: channel.id,
-                        guildId: channel.guild.id,
-                        adapterCreator: await channel.guild.voiceAdapterCreator,
-                        selfDeaf: true,
-                        selfMute: false
-                    });
-                    await console.log("Joined Voice Channel " + channel.name);
-                    queueConstruct.connection = connection;
-                    await main.play(interaction.guild, queueConstruct.songs[0]);
-                } catch (err) {
-                    await console.log(err);
-                    queue.delete(interaction.guild.id);
-                    return await interaction.editReply(err);
-                }
+                await InitFirstSong(interaction, song, queueConstruct);
                 // Remove the first song from the array
                 playlist.shift();
                 serverQueue = await queue.get(interaction.guild.id);
@@ -206,34 +238,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                     requestedBy: interaction,
                     thumbnail: firstSong[0].thumbnails[0].url
                 };
-                const queueConstruct = {
-                    textChannel: interaction.channel,
-                    connection: null,
-                    songs: [],
-                    volume: 5,
-                    playing: true,
-                    audioPlayer: null,
-                    loop: false
-                };
-                await queue.set(interaction.guild.id, queueConstruct);
-                queueConstruct.songs.push(song);
-                try {
-                    const channel = await interaction.member.voice.channel;
-                    connection = joinVoiceChannel({
-                        channelId: channel.id,
-                        guildId: channel.guild.id,
-                        adapterCreator: await channel.guild.voiceAdapterCreator,
-                        selfDeaf: true,
-                        selfMute: false
-                    });
-                    await console.log("Joined Voice Channel " + channel.name);
-                    queueConstruct.connection = connection;
-                    await main.play(interaction.guild, queueConstruct.songs[0]);
-                } catch (err) {
-                    await console.log(err);
-                    queue.delete(interaction.guild.id);
-                    return await interaction.editReply(err);
-                }
+                await InitFirstSong(interaction, song, queueConstruct);
                 // Remove the first song from the array
                 albumTracks.shift();
                 serverQueue = await queue.get(interaction.guild.id);
@@ -310,50 +315,22 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                 name: "ㅤ",
                 value: `Added by ${interaction.member} | Duration: \`❯ ${await main.convertSecondsToTime(song.duration)}\` | Position: \`❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}\``
             });
-        if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
-            serverQueue.songs.length === 0) {
-            // Check if connection is destroyed
-            const queueConstruct = {
-                textChannel: interaction.channel,
-                connection: null,
-                songs: [],
-                volume: 5,
-                playing: true,
-                audioPlayer: null,
-                loop: false
-            };
-            await queue.set(interaction.guild.id, queueConstruct);
-            queueConstruct.songs.push(song);
-            try {
-                const channel = await interaction.member.voice.channel;
-                connection = joinVoiceChannel({
-                    channelId: channel.id, // 994907171982692361
-                    guildId: channel.guild.id, // 994907168484642928
-                    adapterCreator: await channel.guild.voiceAdapterCreator,
-                    selfDeaf: true,
-                    selfMute: false
-                });
-                queueConstruct.connection = connection;
-                await console.log("Joined Voice Channel " + channel.name);
-                await main.play(interaction.guild, queueConstruct.songs[0]);
-                return await interaction.editReply({embeds: [addedToQueueEmbed]});
-                //return await interaction.editReply("Added song " + song.title + " to queue!");
-            } catch (err) {
-                await console.log(err);
-                queue.delete(interaction.guild.id);
-                return await interaction.editReply("Error Occurred: " + err);
-            }
-        } else {
-            serverQueue.songs.push(song);
-            return await interaction.editReply({embeds: [addedToQueueEmbed]});
-        }
+        await AddSingleSong(serverQueue, song, interaction, queueConstruct, addedToQueueEmbed);
     }
 }
 
 async function youtubeLinks(interaction, songURL, serverQueue) {
-    let connection;
-// Get all songs from the playlist if the URL is a playlist
+    // Get all songs from the playlist if the URL is a playlist
     let songInfo;
+    let queueConstruct = {
+        textChannel: interaction.channel,
+        connection: null,
+        songs: [],
+        volume: 5,
+        playing: true,
+        audioPlayer: null,
+        loop: false
+    };
     if (songURL.includes("list=")) {
         // Get the playlist ID from the URL
         // Check if link is from a video of a playlist
@@ -391,34 +368,7 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
                 requestedBy: interaction,
                 thumbnail: firstSong.thumbnails[0].url
             };
-            const queueConstruct = {
-                textChannel: interaction.channel,
-                connection: null,
-                songs: [],
-                volume: 5,
-                playing: true,
-                audioPlayer: null,
-                loop: false
-            };
-            await queue.set(interaction.guild.id, queueConstruct);
-            queueConstruct.songs.push(song);
-            try {
-                const channel = await interaction.member.voice.channel;
-                connection = joinVoiceChannel({
-                    channelId: channel.id,
-                    guildId: channel.guild.id,
-                    adapterCreator: await channel.guild.voiceAdapterCreator,
-                    selfDeaf: true,
-                    selfMute: false
-                });
-                await console.log("Joined Voice Channel " + channel.name);
-                queueConstruct.connection = connection;
-                await main.play(interaction.guild, queueConstruct.songs[0]);
-            } catch (err) {
-                await console.log(err);
-                queue.delete(interaction.guild.id);
-                return await interaction.editReply(err);
-            }
+            await InitFirstSong(interaction, song, queueConstruct);
             // Remove the first song from the array
             songInfo.shift();
             serverQueue = await queue.get(interaction.guild.id);
@@ -472,42 +422,6 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
                 name: "ㅤ",
                 value: `Added by ${interaction.member} | Duration: \`❯ ${await main.convertSecondsToTime(song.duration)}\` | Position: \`❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}\` `
             });
-        if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
-            serverQueue.songs.length === 0) {
-            // Check if connection is destroyed
-            const queueConstruct = {
-                textChannel: interaction.channel,
-                connection: null,
-                songs: [],
-                volume: 5,
-                playing: true,
-                audioPlayer: null,
-                loop: false
-            };
-            await queue.set(interaction.guild.id, queueConstruct);
-            queueConstruct.songs.push(song);
-            try {
-                const channel = await interaction.member.voice.channel;
-                connection = joinVoiceChannel({
-                    channelId: channel.id, // 994907171982692361
-                    guildId: channel.guild.id, // 994907168484642928
-                    adapterCreator: await channel.guild.voiceAdapterCreator,
-                    selfDeaf: true,
-                    selfMute: false
-                });
-                queueConstruct.connection = connection;
-                await console.log("Joined Voice Channel " + channel.name);
-                await main.play(interaction.guild, queueConstruct.songs[0]);
-                return await interaction.editReply({embeds: [addedToQueueEmbed]});
-                //return await interaction.editReply("Added song " + song.title + " to queue!");
-            } catch (err) {
-                await console.log(err);
-                queue.delete(interaction.guild.id);
-                return await interaction.editReply("Error Occurred: " + err);
-            }
-        } else {
-            serverQueue.songs.push(song);
-            return await interaction.editReply({embeds: [addedToQueueEmbed]});
-        }
+        await AddSingleSong(serverQueue, song, interaction, queueConstruct, addedToQueueEmbed);
     }
 }
