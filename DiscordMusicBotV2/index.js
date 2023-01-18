@@ -272,7 +272,7 @@ async function play(guild, song) {
             const stream = await ytdl(song.url, {
                 filter: "audioonly",
                 quality: 'highestaudio',
-                highWaterMark: 1 << 30,
+                highWaterMark: 1 << 64,
                 dlChunkSize: 0,
                 bitrate: 96,
                 liveBuffer: 1 << 30,
@@ -282,7 +282,6 @@ async function play(guild, song) {
             serverQueue.audioPlayer = player;
             const resource = await probeAndCreateResource(stream);
             const connection = serverQueue.connection;
-            // await resource.volume.setVolume(serverQueue.volume / 5);
             await connection.subscribe(player);
             player.on(AudioPlayerStatus.Idle, async () => {
                 if (!serverQueue.loop)
