@@ -11,7 +11,7 @@ module.exports = {
             .setColor('#0099ff')
             .setTitle('The first 10 songs in the queue are:')
             .setDescription(serverQueue.songs.map((song, index) => `${index + 1}. ${song.title ? song.title : song.url}`).slice(0, 10).join('\n'))
-            .setFooter({ text: `Total songs in queue: ${serverQueue.songs.length + 1}` });
+            .setFooter({ text: `Total songs in queue: ${serverQueue.songs.length}` });
         return interaction.reply({ embeds: [queueEmbed] });
     }
 }

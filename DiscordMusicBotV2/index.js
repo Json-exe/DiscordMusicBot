@@ -245,7 +245,7 @@ async function play(guild, song) {
                 .setDescription(`🖸 \`${song.title}\``)
                 .setThumbnail(song.thumbnail)
                 .addFields(
-                    { name: ':microphone: Requested By', value: `${song.requestedBy.member}`, inline: true },
+                    { name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true },
                     { name: '⏰ Duration', value: `${await convertSecondsToTime(song.duration)}`, inline: true },
                 );
 
@@ -327,7 +327,7 @@ async function play(guild, song) {
                 .setDescription(`🖸 \`${song.title}\``)
                 .setThumbnail(song.thumbnail)
                 .addFields(
-                    { name: ':microphone: Requested By', value: `${song.requestedBy.member}`, inline: true }
+                    { name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true }
                 );
             const nowPlayingComponents = new ActionRowBuilder()
                 .addComponents(

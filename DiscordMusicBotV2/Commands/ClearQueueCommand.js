@@ -15,7 +15,7 @@ module.exports = {
         if (connection.joinConfig.channelId !== interaction.member.voice.channelId)
             return await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("You need to be in the same voice channel as the bot to use this command!").setColor(0xff0000) ]});
 
-        serverQueue.songs = [];
+        serverQueue.songs = [serverQueue.songs[0]];
         serverQueue.loop = false;
 
         await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Cleared the queue!").setColor(0x00ff00) ]});

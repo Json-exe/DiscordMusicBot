@@ -31,6 +31,7 @@ module.exports = {
         let songURL = interaction.options.getString('song');
 
         interaction.deferReply( { fetchReply: true } );
+        await wait(500);
 
         // Checking if song is from spotify
         if (songURL.includes("spotify")) {
@@ -150,7 +151,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                     title: firstSong[0].title + " - " + artists,
                     url: firstSong[0].url,
                     duration: firstSong[0].durationInSec,
-                    requestedBy: interaction,
+                    requestedBy: interaction.member,
                     thumbnail: firstSong[0].thumbnails[0].url
                 };
                 await InitFirstSong(interaction, song, queueConstruct);
@@ -167,7 +168,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                         title: playlist[i].name,
                         url: playlist[i].url,
                         duration: playlist[i].durationInSec,
-                        requestedBy: interaction,
+                        requestedBy: interaction.member,
                         thumbnail: playlist[i].thumbnail.url
                     };
                     serverQueue.songs.push(song);
@@ -189,7 +190,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                     title: playlist[i].name + " - " + playlist[i].artists[0].name,
                     url: playlist[i].url,
                     duration: playlist[i].durationInSec,
-                    requestedBy: interaction,
+                    requestedBy: interaction.member,
                     thumbnail: playlist[i].thumbnail.url
                 };
                 serverQueue.songs.push(song);
@@ -237,7 +238,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                     title: firstSong[0].title + " - " + artists,
                     url: firstSong[0].url,
                     duration: firstSong[0].durationInSec,
-                    requestedBy: interaction,
+                    requestedBy: interaction.member,
                     thumbnail: firstSong[0].thumbnails[0].url
                 };
                 await InitFirstSong(interaction, song, queueConstruct);
@@ -254,7 +255,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                         title: albumTracks[i].name,
                         url: albumTracks[i].url,
                         duration: albumTracks[i].durationInSec,
-                        requestedBy: interaction,
+                        requestedBy: interaction.member,
                         thumbnail: albumTracks[i].thumbnail.url
                     };
                     serverQueue.songs.push(song);
@@ -276,7 +277,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
                     title: albumTracks[i].name + " - " + albumTracks[i].artists[0].name,
                     url: albumTracks[i].url,
                     duration: albumTracks[i].durationInSec,
-                    requestedBy: interaction,
+                    requestedBy: interaction.member,
                     thumbnail: albumTracks[i].thumbnail.url
                 };
                 serverQueue.songs.push(song);
@@ -304,7 +305,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             title: video[0].title,
             url: video[0].url,
             duration: video[0].durationInSec,
-            requestedBy: interaction,
+            requestedBy: interaction.member,
             thumbnail: video[0].thumbnails[0].url
         };
         // Create the added to queue embed
