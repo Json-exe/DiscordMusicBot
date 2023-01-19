@@ -231,7 +231,7 @@ async function play(guild, song) {
                                 .setDescription(`🖸 \`${song.title}\` Song play failed! Please try again later. Error: ${e}`)
                                 .setThumbnail(song.thumbnail)
                             serverQueue.songs.shift();
-                            return await serverQueue.textChannel.send( {embeds: playFailed } );
+                            return await serverQueue.textChannel.send({ embeds: [playFailed] });
                         }
                     }
                 }
