@@ -216,11 +216,12 @@ async function play(guild, song) {
                         for (let i = 0; i < spotifySong.artists.length; i++) {
                             artists += spotifySong.artists[i].name + " ";
                         }
-                        const video = await search(spotifySong.name + " " + artists, {limit: 1, unblurNSFWThumbnails: true});
+                        const video = await search(spotifySong.name + " " + artists, {limit: 1, unblurNSFWThumbnails: true, source: { youtube: "video" }});
                         song.url = video[0].url;
                         retry = 3;
                     } catch (e) {
                         console.error(e);
+                        console.log(song.url);
                         retry++;
                         if (retry === 3) {
                             // Create Now Playing Embed
