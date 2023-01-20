@@ -104,6 +104,18 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+/*client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isStringSelectMenu()) return;
+
+    if (interaction.customId === "search") {
+        // Check if the user has selected something
+        if (interaction.values.length === 0) {
+            return interaction.reply({content: "Please select something!", ephemeral: true});
+        }
+        await interaction.update({ components: [] });
+    }
+});*/
+
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
     const serverQueue = await queue.get(interaction.guild.id);
