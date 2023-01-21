@@ -17,6 +17,10 @@ const {
 const ytdl = require("ytdl-core");
 const {generateDependencyReport} = require('@discordjs/voice');
 const {spotify, search} = require("play-dl");
+const pauseUnpause = require("./Commands/PauseUnpauseCommand");
+const stop = require("./Commands/StopCommand");
+const skip = require("./Commands/SkipCommand");
+const loop = require("./Commands/LoopSongCommand");
 
 const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates]});
 
@@ -104,47 +108,54 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-/*client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isStringSelectMenu()) return;
-
-    if (interaction.customId === "search") {
-        // Check if the user has selected something
-        if (interaction.values.length === 0) {
-            return interaction.reply({content: "Please select something!", ephemeral: true});
-        }
-        await interaction.update({ components: [] });
-    }
-});*/
-
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
     const serverQueue = await queue.get(interaction.guild.id);
-    if (interaction.customId === "pause"){
-        const pauseUnpause = require('./Commands/PauseUnpauseCommand');
-        await pauseUnpause.execute(interaction, serverQueue);
-    } else if (interaction.customId === "stop") {
-        const stop = require('./Commands/StopCommand');
-        await stop.execute(interaction, serverQueue);
-    } else if (interaction.customId === "skip") {
-        const skip = require('./Commands/SkipCommand');
-        await skip.execute(interaction, serverQueue);
-    } else if (interaction.customId === "loop") {
-        const loop = require('./Commands/LoopSongCommand');
-        await loop.execute(interaction, serverQueue);
+    switch (interaction.customId) {
+        case "pause":
+            const pauseUnpause = require('./Commands/PauseUnpauseCommand');
+            await pauseUnpause.execute(interaction, serverQueue);
+            break;
+        case "stop":
+            const stop = require('./Commands/StopCommand');
+            await stop.execute(interaction, serverQueue);
+            break;
+        case "skip":
+            const skip = require('./Commands/SkipCommand');
+            await skip.execute(interaction, serverQueue);
+            break;
+        case "loop":
+            const loop = require('./Commands/LoopSongCommand');
+            await loop.execute(interaction, serverQueue);
+            break;
+        case "volumeup":
+            if (serverQueue.volume === 1) return interaction.reply({content: "The volume is already at 100%", ephemeral: true});
+            serverQueue.volume += 0.1;
+            serverQueue.audioResource.volume.setVolume(serverQueue.volume);
+            await interaction.reply({content: `Volume set to ${Math.round(serverQueue.volume * 100)}%`, ephemeral: true});
+            break;
+        case "volumedown":
+            if (serverQueue.volume === 0) return interaction.reply({content: "The volume is already at 0%", ephemeral: true});
+            serverQueue.volume -= 0.1;
+            serverQueue.audioResource.volume.setVolume(serverQueue.volume);
+            await interaction.reply({content: `Volume set to ${Math.round(serverQueue.volume * 100)}%`, ephemeral: true});
+            break;
     }
 });
 
 let x;
 module.exports.x = x;
 
-async function probeAndCreateResource(readableStream) {
+async function probeAndCreateResource(readableStream){
     const {stream, type} = await demuxProbe(readableStream);
     return createAudioResource(stream, {
         inputType: type,
+        inlineVolume: true
     });
 }
 
 module.exports.play = play;
+
 async function play(guild, song) {
     if (x) {
         clearInterval(x);
@@ -219,34 +230,32 @@ async function play(guild, song) {
                     song.thumbnail = info.videoDetails.thumbnails[0].url;
                 }
             } else {
-                let retry = 0;
-                while (retry < 3) {
-                    try {
-                        const spotifySong = await spotify(song.url);
-                        // Get all artists from the song to search on YouTube
-                        let artists = "";
-                        for (let i = 0; i < spotifySong.artists.length; i++) {
-                            artists += spotifySong.artists[i].name + " ";
-                        }
-                        const video = await search(spotifySong.name + " " + artists, {limit: 1, unblurNSFWThumbnails: true, source: { youtube: "video" }});
-                        song.url = video[0].url;
-                        retry = 3;
-                    } catch (e) {
-                        console.error(e);
-                        console.log(song.url);
-                        retry++;
-                        if (retry === 3) {
-                            // Create Now Playing Embed
-                            const playFailed = new EmbedBuilder()
-                                .setTitle('SONG PLAY FAILED')
-                                .setURL(song.url)
-                                .setColor(0x0000ff)
-                                .setDescription(`🖸 \`${song.title}\` Song play failed! Please try again later. Error: ${e}`)
-                                .setThumbnail(song.thumbnail)
-                            serverQueue.songs.shift();
-                            return await serverQueue.textChannel.send({ embeds: [playFailed] });
-                        }
+                try {
+                    const spotifySong = await spotify(song.url);
+                    // Get all artists from the song to search on YouTube
+                    console.log(spotifySong);
+                    let artists = "";
+                    for (let i = 0; i < spotifySong.artists.length; i++) {
+                        artists += spotifySong.artists[i].name + " ";
                     }
+                    const video = await search(spotifySong.name + " " + artists, {
+                        limit: 1,
+                        unblurNSFWThumbnails: true,
+                        source: {youtube: "video"}
+                    });
+                    song.url = video[0].url;
+                } catch (e) {
+                    console.error(e);
+                    // Create Now Playing Embed
+                    const playFailed = new EmbedBuilder()
+                        .setTitle('SONG PLAY FAILED')
+                        .setURL(song.url)
+                        .setColor(0x0000ff)
+                        .setDescription(`🖸 \`${song.title}\` Song play failed! Please try again later. Error: ${e}`)
+                        .setThumbnail(song.thumbnail)
+                    serverQueue.songs.shift();
+                    await play(guild, serverQueue.songs[0]);
+                    return await serverQueue.textChannel.send({embeds: [playFailed]});
                 }
             }
 
@@ -258,8 +267,20 @@ async function play(guild, song) {
                 .setDescription(`🖸 \`${song.title}\``)
                 .setThumbnail(song.thumbnail)
                 .addFields(
-                    { name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true },
-                    { name: '⏰ Duration', value: `${await convertSecondsToTime(song.duration)}`, inline: true },
+                    {name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true},
+                    {name: '⏰ Duration', value: `${await convertSecondsToTime(song.duration)}`, inline: true},
+                );
+
+            const AudioControlComponents = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('volumeup')
+                        .setEmoji('🔊')
+                        .setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder()
+                        .setCustomId('volumedown')
+                        .setEmoji('🔉')
+                        .setStyle(ButtonStyle.Secondary),
                 );
 
             const nowPlayingComponents = new ActionRowBuilder()
@@ -294,6 +315,9 @@ async function play(guild, song) {
             const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
             serverQueue.audioPlayer = player;
             const resource = await probeAndCreateResource(stream);
+            // TODO: Remove this if inline volume is disabled!
+            resource.volume.setVolume(serverQueue.volume)
+            serverQueue.audioResource = resource;
             const connection = serverQueue.connection;
             await connection.subscribe(player);
             player.on(AudioPlayerStatus.Idle, async () => {
@@ -330,7 +354,7 @@ async function play(guild, song) {
                 }, 1500);
             });
             await player.play(resource);
-            await serverQueue.textChannel.send({ embeds: [nowPlayingEmbed], components: [nowPlayingComponents] });
+            await serverQueue.textChannel.send({embeds: [nowPlayingEmbed], components: [nowPlayingComponents, AudioControlComponents]});
         } else {
             // Create Now Playing Embed
             const nowPlayingEmbed = new EmbedBuilder()
@@ -340,7 +364,7 @@ async function play(guild, song) {
                 .setDescription(`🖸 \`${song.title}\``)
                 .setThumbnail(song.thumbnail)
                 .addFields(
-                    { name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true }
+                    {name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true}
                 );
             const nowPlayingComponents = new ActionRowBuilder()
                 .addComponents(
@@ -385,6 +409,9 @@ async function play(guild, song) {
             }
             const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
             serverQueue.audioPlayer = player;
+            // TODO: Remove this if inline volume is disabled!
+            resource.volume.setVolume(serverQueue.volume)
+            serverQueue.audioResource = resource;
             const connection = serverQueue.connection;
             await connection.subscribe(player);
             player.on(AudioPlayerStatus.Idle, async () => {
@@ -418,7 +445,7 @@ async function play(guild, song) {
                 }, 1500);
             });
             await player.play(resource);
-            await serverQueue.textChannel.send({ embeds: [nowPlayingEmbed], components: [nowPlayingComponents] });
+            await serverQueue.textChannel.send({embeds: [nowPlayingEmbed], components: [nowPlayingComponents, AudioControlComponents]});
         }
     } catch (error) {
         await console.log(error);
@@ -427,6 +454,7 @@ async function play(guild, song) {
 }
 
 module.exports.convertSecondsToTime = convertSecondsToTime;
+
 async function convertSecondsToTime(time) {
     const hours = Math.floor(time / 3600);
     const minutes = Math.floor((time - (hours * 3600)) / 60);

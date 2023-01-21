@@ -104,7 +104,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
         textChannel: interaction.channel,
         connection: null,
         songs: [],
-        volume: 5,
+        volume: 1,
         playing: true,
         audioPlayer: null,
         loop: false
@@ -330,9 +330,10 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
         textChannel: interaction.channel,
         connection: null,
         songs: [],
-        volume: 5,
+        volume: 1,
         playing: true,
         audioPlayer: null,
+        audioResource: null,
         loop: false
     };
     if (songURL.includes("list=")) {
