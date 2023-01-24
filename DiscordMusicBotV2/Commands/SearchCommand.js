@@ -21,18 +21,20 @@ module.exports = {
             }
 
             let searchResult = await search(searchPattern, {limit: 10, unblurNSFWThumbnails: true, source: { youtube: "video" }});
+            if (searchResult.length === 0) return interaction.reply("No results found.");
             let embed = new EmbedBuilder();
-            embed.setTitle("Search Results");
-            embed.setDescription("Copy the url of the video you want to play and send it by using the /play command.");
+            embed.setTitle("Search Results (Top 10)");
+            embed.setDescription("Select the song you want to play.");
+            embed.setThumbnail(searchResult[0].thumbnails.url);
             let fields = [];
             for (let i = 0; i < searchResult.length; i++) {
-                fields.push({ name: (i + 1).toString(), value: searchResult[i].title + " - " + searchResult[i].url, inline: true });
+                fields.push({ name: `${searchResult[i].title} - ${searchResult[i].url}`, value: `Duration: ${await main.convertSecondsToTime(searchResult[i].durationInSec)}`, inline: false });
             }
             embed.addFields(fields);
             // Create here the options for the select menu
             let options = [];
             for (let i = 0; i < searchResult.length; i++) {
-                options.push({ label: (i + 1).toString(), value: searchResult[i].url, description: searchResult[i].title });
+                options.push({ label: searchResult[i].title, value: searchResult[i].url, description: `Duration: ${await main.convertSecondsToTime(searchResult[i].durationInSec)}`, emoji: "🎵" });
             }
 
             const row = new ActionRowBuilder()

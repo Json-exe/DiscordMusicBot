@@ -16,11 +16,7 @@ const {
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 const {generateDependencyReport} = require('@discordjs/voice');
-const {spotify, search} = require("play-dl");
-const pauseUnpause = require("./Commands/PauseUnpauseCommand");
-const stop = require("./Commands/StopCommand");
-const skip = require("./Commands/SkipCommand");
-const loop = require("./Commands/LoopSongCommand");
+const {spotify, search, is_expired, refreshToken} = require("play-dl");
 
 const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates]});
 
@@ -31,7 +27,6 @@ console.log(generateDependencyReport());
 const queue = new Map();
 // Export the queue, so it can be used in other files
 module.exports.queue = queue;
-
 
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'Commands');
@@ -48,9 +43,13 @@ for (const file of commandFiles) {
     }
 }
 
-
 client.once('ready', () => {
     console.log('Ready!');
+    play.getFreeClientID().then((clientID) => play.setToken({
+        soundcloud : {
+            client_id : clientID
+        }
+    }))
     if (args[0] === "debug") {
         client.user.setPresence({
             activities: [{name: "Under Maintenance. Do not use!"}],
@@ -216,7 +215,7 @@ async function play(guild, song) {
     serverQueue.playing = true;
 
     try {
-        if (song.url.includes("youtube") || song.url.includes("spotify")) {
+        if (song.url.includes("youtube") && !song.url.includes(".mp3" || ".wav" || ".ogg") || song.url.includes("spotify") && !song.url.includes(".mp3" || ".wav" || ".ogg")) {
             if (song.url.includes("youtube")) {
                 if (song.title === null || song.duration === null || song.thumbnail === null) {
                     // Check if url is a playlist
@@ -231,6 +230,9 @@ async function play(guild, song) {
                 }
             } else {
                 try {
+                    if (is_expired()) {
+                        await refreshToken();
+                    }
                     const spotifySong = await spotify(song.url);
                     // Get all artists from the song to search on YouTube
                     console.log(spotifySong);
@@ -243,6 +245,9 @@ async function play(guild, song) {
                         unblurNSFWThumbnails: true,
                         source: {youtube: "video"}
                     });
+                    if (video[0] === undefined) {
+                        return await serverQueue.textChannel.send({content: `No results found on YouTube for ${song.url} song!`});
+                    }
                     song.url = video[0].url;
                 } catch (e) {
                     console.error(e);

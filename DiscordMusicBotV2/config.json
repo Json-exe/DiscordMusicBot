@@ -1,7 +1,7 @@
 {
   "clientId": "1028372176878964808",
   "addedGuildIds": ["805503440339992597", "921858362067533824"],
-  "changelog" : "\n- Command to change the current text channel the bot is sending message like \"NOW PLAYING\" \n- Fixed playback stop on 401 error \n- Removed retry after 401 error \n Added volume up/down buttons",
+  "changelog" : "\n- Added problem catching if youtube search gets 0 results. \n- Added small soundcloud track support \n- Redesigned search results",
   "token": "MTAyODM3MjE3Njg3ODk2NDgwOA.GOSPRD.0nSKtkquEyGaQtksZ3QgOiOxf0x4sclEd9xGDw",
-  "version": "V0.4.2.alpha"
+  "version": "V0.4.4.alpha"
 }

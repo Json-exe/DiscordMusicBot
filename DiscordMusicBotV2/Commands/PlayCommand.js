@@ -5,7 +5,7 @@ const {
 const main = require("../index");
 const queue = require("../index.js").queue;
 const wait = require('node:timers/promises').setTimeout;
-const {playlist_info, search, video_info, spotify, refreshToken, is_expired} = require('play-dl');
+const {playlist_info, search, video_info, spotify, refreshToken, is_expired, so_validate, soundcloud} = require('play-dl');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -31,7 +31,7 @@ module.exports = {
         let songURL = interaction.options.getString('song');
 
         interaction.deferReply( { fetchReply: true } );
-        await wait(500);
+        await wait(600);
 
         // Checking if song is from spotify
         if (songURL.includes("spotify")) {
@@ -41,6 +41,9 @@ module.exports = {
             await spotifyLinks(interaction, songURL, serverQueue);
         } else if (songURL.includes("youtube") || songURL.includes("youtu.be")) {
             await youtubeLinks(interaction, songURL, serverQueue);
+        } else if (songURL.includes("soundcloud")) {
+            await wait(1000);
+            return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Soundcloud Links are not supported yet!").setColor(0x0000ff)]});
         } else {
             await wait(1000);
             return await interaction.editReply({ embeds: [ new EmbedBuilder().setTitle("Invalid URL Type. Bot only supports YT and Spotify Links!").setColor(0x0000ff) ] });
@@ -95,6 +98,53 @@ async function AddSingleSong(serverQueue, song, interaction, queueConstruct, add
     } else {
         serverQueue.songs.push(song);
         return await interaction.editReply({embeds: [addedToQueueEmbed]});
+    }
+}
+
+async function soundcloudLinks(interaction, songURL, serverQueue) {
+    // Get all songs from the playlist if the URL is a playlist
+    let songInfo;
+    let queueConstruct = {
+        textChannel: interaction.channel,
+        connection: null,
+        songs: [],
+        volume: 1,
+        playing: true,
+        audioPlayer: null,
+        audioResource: null,
+        loop: false
+    };
+    // First validate the soundcloud link to check if it's a playlist, a song or a wrong link
+    let validation = await so_validate(songURL);
+    if (validation === "playlist") {
+        return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Playlists from Soundcloud are not supported yet!").setColor(0x0000ff)]});
+    } else if (validation === "song") {
+        try {
+            songInfo = await soundcloud(songURL);
+        } catch (error) {
+            console.error(error);
+            return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Invalid URL Type. Please check your soundcloud URL!").setColor(0x0000ff)]});
+        }
+        let song = {
+            title: songInfo.name,
+            url: songInfo.url,
+            duration: songInfo.durationInSec,
+            requestedBy: interaction.member,
+            thumbnail: songInfo.thumbnail
+        };
+        const addedToQueueEmbed = new EmbedBuilder()
+            .setTitle('ADDED TO QUEUE')
+            .setColor(0x0000ff)
+            .setDescription(`:white_check_mark: \`${song.title}\``)
+            .setThumbnail(song.thumbnail)
+            .addFields(
+                {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
+                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},
+                {name: ":hash:Position", value: `❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}`, inline: true}
+            );
+        await AddSingleSong(serverQueue, song, interaction, queueConstruct, addedToQueueEmbed);
+    } else {
+        return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Invalid URL Type. Please check your soundcloud URL!").setColor(0x0000ff)]});
     }
 }
 
