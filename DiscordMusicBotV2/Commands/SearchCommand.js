@@ -2,7 +2,6 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBui
 const {joinVoiceChannel, VoiceConnectionStatus} = require("@discordjs/voice");
 const main = require("../index");
 const queue = require("../index.js").queue;
-const wait = require('node:timers/promises').setTimeout;
 const {search, video_info} = require('play-dl');
 
 module.exports = {
@@ -25,10 +24,10 @@ module.exports = {
             let embed = new EmbedBuilder();
             embed.setTitle("Search Results (Top 10)");
             embed.setDescription("Select the song you want to play.");
-            embed.setThumbnail(searchResult[0].thumbnails.url);
+            embed.setThumbnail(searchResult[0].thumbnails[0].url);
             let fields = [];
             for (let i = 0; i < searchResult.length; i++) {
-                fields.push({ name: `${searchResult[i].title} - ${searchResult[i].url}`, value: `Duration: ${await main.convertSecondsToTime(searchResult[i].durationInSec)}`, inline: false });
+                fields.push({ name: ` `, value: `${i+1}) [${searchResult[i].title}](${searchResult[i].url}) - ${await main.convertSecondsToTime(searchResult[i].durationInSec)}`, inline: false });
             }
             embed.addFields(fields);
             // Create here the options for the select menu
@@ -55,6 +54,11 @@ module.exports = {
                     collector.stop();
                 } else {
                     await i.reply({content: `You can't select this option`, ephemeral: true});
+                }
+            });
+            collector.on('end', async collected => {
+                if (collected.size === 0) {
+                    await interaction.editReply({embeds: [embed], components: []});
                 }
             });
         }
@@ -86,7 +90,7 @@ module.exports = {
             textChannel: interaction.channel,
             connection: null,
             songs: [],
-            volume: 5,
+            volume: 1,
             playing: true,
             audioPlayer: null,
             loop: false

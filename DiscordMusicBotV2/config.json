@@ -1,7 +1,7 @@
 {
   "clientId": "1028372176878964808",
   "addedGuildIds": ["805503440339992597", "921858362067533824"],
-  "changelog" : "\n- Added problem catching if youtube search gets 0 results. \n- Redesigned search results",
+  "changelog" : "\n- Added problem catching if youtube search gets 0 results. \n- Redesigned search results \n- Fixed volume bug",
   "token": "MTAyODM3MjE3Njg3ODk2NDgwOA.GOSPRD.0nSKtkquEyGaQtksZ3QgOiOxf0x4sclEd9xGDw",
   "version": "V0.4.5.alpha"
 }
