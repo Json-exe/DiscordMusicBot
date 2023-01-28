@@ -45,11 +45,6 @@ for (const file of commandFiles) {
 
 client.once('ready', () => {
     console.log('Ready!');
-    play.getFreeClientID().then((clientID) => play.setToken({
-        soundcloud : {
-            client_id : clientID
-        }
-    }))
     if (args[0] === "debug") {
         client.user.setPresence({
             activities: [{name: "Under Maintenance. Do not use!"}],
