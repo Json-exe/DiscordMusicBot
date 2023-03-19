@@ -30,19 +30,20 @@ module.exports = {
 
         let songURL = interaction.options.getString('song');
 
-        interaction.deferReply( { fetchReply: true } );
-        await wait(600);
 
         // Checking if song is from spotify
         if (songURL.includes("spotify")) {
+            interaction.deferReply( { fetchReply: true } );
+            await wait(600);
             if (is_expired()) {
                 await refreshToken();
             }
             await spotifyLinks(interaction, songURL, serverQueue);
         } else if (songURL.includes("youtube") || songURL.includes("youtu.be")) {
+            interaction.deferReply( { fetchReply: true } );
+            await wait(600);
             await youtubeLinks(interaction, songURL, serverQueue);
         } else {
-            await wait(1000);
             return await interaction.editReply({ embeds: [ new EmbedBuilder().setTitle("Invalid URL Type. Bot only supports YT and Spotify Links!").setColor(0x0000ff) ] });
         }
     }
