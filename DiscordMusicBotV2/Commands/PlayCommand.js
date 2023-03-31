@@ -15,21 +15,20 @@ module.exports = {
     async execute(interaction, serverQueue) {
         const voiceChannel = await interaction.member.voice.channel;
         if (!voiceChannel)
-            return await interaction.editReply(
+            return await interaction.reply(
                 "You need to be in a voice channel to play music!"
             );
 
-        if (!voiceChannel.joinable) return await interaction.editReply('I cannot join your voice channel! Check the permissions please!');
+        if (!voiceChannel.joinable) return await interaction.reply('I cannot join your voice channel! Check the permissions please!');
 
         const permissions = await voiceChannel.permissionsFor(interaction.client.user);
         if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-            return await interaction.editReply(
+            return await interaction.reply(
                 "I need the permissions to join and speak in your voice channel!"
             );
         }
 
         let songURL = interaction.options.getString('song');
-
 
         // Checking if song is from spotify
         if (songURL.includes("spotify")) {
@@ -44,7 +43,7 @@ module.exports = {
             await wait(600);
             await youtubeLinks(interaction, songURL, serverQueue);
         } else {
-            return await interaction.editReply({ embeds: [ new EmbedBuilder().setTitle("Invalid URL Type. Bot only supports YT and Spotify Links!").setColor(0x0000ff) ] });
+            return await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Invalid URL Type. Bot only supports YT and Spotify Links!").setColor(0x0000ff) ] });
         }
     }
 }
