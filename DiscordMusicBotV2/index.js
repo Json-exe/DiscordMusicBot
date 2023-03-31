@@ -12,11 +12,11 @@ const {
     createAudioResource,
     NoSubscriberBehavior,
     AudioPlayerStatus,
-    StreamType, VoiceConnectionStatus, demuxProbe
+    sourceType, VoiceConnectionStatus, demuxProbe, AudioPlayer
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 const {generateDependencyReport} = require('@discordjs/voice');
-const {spotify, search, is_expired, refreshToken} = require("play-dl");
+const {spotify, search, is_expired, refreshToken, source, stream} = require("play-dl");
 
 const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates]});
 
@@ -140,9 +140,9 @@ client.on('interactionCreate', async interaction => {
 let x;
 module.exports.x = x;
 
-async function probeAndCreateResource(readableStream){
-    const {stream, type} = await demuxProbe(readableStream);
-    return createAudioResource(stream, {
+async function probeAndCreateResource(readablesource){
+    const {source, type} = await demuxProbe(readablesource);
+    return createAudioResource(source, {
         inputType: type,
         inlineVolume: true
     });
@@ -303,22 +303,25 @@ async function play(guild, song) {
                         .setStyle(ButtonStyle.Success),
                 );
 
-            const stream = await ytdl(song.url, {
+            /*const source = await ytdl(song.url, {
                 filter: "audioonly",
                 quality: 'highestaudio',
-                highWaterMark: 1 << 60,
-                dlChunkSize: 0,
+                highWaterMark: 1 << 16,
+                dlChunkSize: 1 << 12,
                 bitrate: 96,
-                liveBuffer: 1 << 60,
-                fmt: 'mp3',
-            });
+                liveBuffer: 1 << 30,
+                fmt: 'mp3'
+            });*/
+
+            const source = await stream(song.url, { quality: 2 })
             const player = await createAudioPlayer({behaviors: {noSubscriber: NoSubscriberBehavior.Pause}});
             serverQueue.audioPlayer = player;
-            const resource = await probeAndCreateResource(stream);
+            const resource = createAudioResource(source.stream, { inputType: source.type, inlineVolume: true });
             // TODO: Remove this if inline volume is disabled!
             resource.volume.setVolume(serverQueue.volume)
             serverQueue.audioResource = resource;
             const connection = serverQueue.connection;
+            connection.on('debug', console.log).on('stateChange', (oldState, newState) => { console.log(oldState.status, '->', newState.status); });
             await connection.subscribe(player);
             player.on(AudioPlayerStatus.Idle, async () => {
                 if (!serverQueue.loop)
@@ -332,7 +335,6 @@ async function play(guild, song) {
                         let t = d - now;
                         if (t < 0) {
                             clearInterval(x);
-                            // Check if the connection is already destroyed
                             if (serverQueue?.connection?.state?.status !== VoiceConnectionStatus.Destroyed) {
                                 serverQueue.connection.destroy();
                             }
@@ -341,16 +343,18 @@ async function play(guild, song) {
                     }, 1000);
                     return await serverQueue.textChannel.send({embeds: [new EmbedBuilder().setTitle("No more songs in queue! Leaving in 1 Hour.").setColor(0x0000ff)]});
                 }
-                // Wait a bit before playing next song
                 setTimeout(function () {
                     play(guild, serverQueue.songs[0]);
                 }, 1500);
             }).on('error', error => {
                 console.error(error);
             }).on(AudioPlayerStatus.AutoPaused, () => {
-                // Resume the player after 1500 ms
                 setTimeout(function () {
-                    player.unpause();
+                    var unpaused = false;
+                    while (!unpaused) {
+                        console.log("Unpausing");
+                        unpaused = player.unpause();
+                    }
                 }, 1500);
             });
             await player.play(resource);
@@ -388,22 +392,22 @@ async function play(guild, song) {
             let resource;
             if (song.url.endsWith(".mp3")) {
                 resource = createAudioResource(song.url, {
-                    inputType: StreamType.Arbitrary,
+                    inputType: sourceType.Arbitrary,
                     inlineVolume: true
                 });
             } else if (song.url.endsWith(".ogg")) {
                 resource = createAudioResource(song.url, {
-                    inputType: StreamType.OggOpus,
+                    inputType: sourceType.OggOpus,
                     inlineVolume: true
                 });
             } else if (song.url.endsWith(".webm")) {
                 resource = createAudioResource(song.url, {
-                    inputType: StreamType.WebmOpus,
+                    inputType: sourceType.WebmOpus,
                     inlineVolume: true
                 });
             } else {
                 resource = await createAudioResource(song.url, {
-                    inputType: StreamType.Arbitrary,
+                    inputType: sourceType.Arbitrary,
                     inlineVolume: true,
                 });
             }
@@ -438,10 +442,13 @@ async function play(guild, song) {
                 }, 1500);
             }).on('error', error => {
                 console.error(error);
-            }).on(AudioPlayerStatus.AutoPaused, () => {
-                // Resume the player after 1500 ms
+            }).on('autopaused', () => {
                 setTimeout(function () {
-                    player.unpause();
+                    var unpaused = false;
+                    while (!unpaused) {
+                        console.log("Unpausing");
+                        unpaused = player.unpause();
+                    }
                 }, 1500);
             });
             await player.play(resource);
