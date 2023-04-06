@@ -6,6 +6,7 @@ const main = require("../index");
 const queue = require("../index.js").queue;
 const wait = require('node:timers/promises').setTimeout;
 const {playlist_info, search, video_info, spotify, refreshToken, is_expired, so_validate, soundcloud} = require('play-dl');
+const {version} = require('../config.json');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -42,9 +43,95 @@ module.exports = {
             interaction.deferReply( { fetchReply: true } );
             await wait(600);
             await youtubeLinks(interaction, songURL, serverQueue);
+        } else if (songURL.includes("soundcloud")) {
+            interaction.deferReply( { fetchReply: true } );
+            await wait(600);
+            await soundcloudLinks(interaction, songURL, serverQueue);
         } else {
             return await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Invalid URL Type. Bot only supports YT and Spotify Links!").setColor(0x0000ff) ] });
         }
+    }
+}
+
+async function soundcloudLinks(interaction, songURL, serverQueue) {
+    let queueConstruct = {
+        textChannel: interaction.channel,
+        connection: null,
+        songs: [],
+        volume: 1,
+        playing: true,
+        audioPlayer: null,
+        loop: false
+    };
+    let sound;
+    try {
+        sound = await soundcloud(songURL);
+    } catch (err) {
+        console.log(err);
+        return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Please check URL/Playlist").setColor(0x0000ff).setDescription("Please check the provided URL currently only Soundcloud tracks are supported!")]});
+    }
+    if (sound.type === "track"){
+        let song = {
+            title: sound.name,
+            url: sound.url,
+            duration: sound.durationInSec,
+            thumbnail: sound.thumbnail,
+            requestedBy: interaction.member
+        };
+        // Create the added to queue embed
+        const addedToQueueEmbed = new EmbedBuilder()
+            .setTitle('ADDED TO QUEUE')
+            .setColor(0x0000ff)
+            .setDescription(`:white_check_mark: \`${song.title}\``)
+            .setThumbnail(song.thumbnail)
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .addFields(
+                {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
+                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},
+                {name: ":hash:Position", value: `❯ ${serverQueue?.songs?.length > 0 ? serverQueue.songs.length : 1}`, inline: true}
+            );
+        await AddSingleSong(serverQueue, song, interaction, queueConstruct, addedToQueueEmbed);
+    } else if (sound.type === "playlist") {
+        let songs = [];
+        for (let i = 0; i < sound.tracks.length; i++) {
+            let song = {
+                title: sound.tracks[i].name,
+                url: sound.tracks[i].url,
+                duration: sound.tracks[i].durationInSec,
+                thumbnail: sound.tracks[i].thumbnail,
+                requestedBy: interaction.member
+            };
+            songs.push(song);
+        }
+        // Create the added to queue embed
+        const addedPlaylistEmbed = new EmbedBuilder()
+            .setTitle('ADDED PLAYLIST')
+            .setColor(0x0000ff)
+            .setDescription(`:white_check_mark: \`${sound.name}\``)
+            .setThumbnail(songs[0].thumbnail)
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .addFields(
+                {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
+                {name: ":musical_note:Songs", value: `${sound.tracksCount}`, inline: true},
+                {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(sound.durationInSec)}`, inline: true}
+            );
+        if (!serverQueue || !serverQueue.connection || serverQueue.connection.state.status === VoiceConnectionStatus.Destroyed || serverQueue.connection.state.status === VoiceConnectionStatus.Disconnected ||
+            serverQueue.songs.length === 0) {
+            await InitFirstSong(interaction, songs[0], queueConstruct);
+            songs.shift();
+            serverQueue = await queue.get(interaction.guild.id);
+            for (let i = 0; i < songs.length; i++) {
+                serverQueue.songs.push(songs[i]);
+            }
+            return await interaction.editReply({embeds: [addedPlaylistEmbed]});
+        } else {
+            for (let i = 0; i < songs.length; i++) {
+                serverQueue.songs.push(songs[i]);
+            }
+            return await interaction.editReply({embeds: [addedPlaylistEmbed]});
+        }
+    } else {
+        return await interaction.editReply({embeds: [new EmbedBuilder().setTitle("Please check URL/Playlist").setColor(0x0000ff).setDescription("Please check the provided URL currently only Soundcloud tracks are supported!")]});
     }
 }
 
@@ -132,6 +219,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${playlistInfo.name}\``)
             .setThumbnail(playlistInfo.thumbnail.url)
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":musical_note:Songs", value: `${playlist.length}`, inline: true},
@@ -219,6 +307,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${spotifyAlbum.name}\``)
             .setThumbnail(spotifyAlbum.thumbnail.url)
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":musical_note:Songs", value: `${albumTracks.length}`, inline: true},
@@ -314,6 +403,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${song.title}\``)
             .setThumbnail(song.thumbnail)
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},
@@ -366,6 +456,7 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${playlist.title}\``)
             .setThumbnail(playlist.thumbnail.url)
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":musical_note:Songs", value: `${playlist.videoCount}`, inline: true},
@@ -432,6 +523,7 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${song.title}\``)
             .setThumbnail(song.thumbnail)
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},

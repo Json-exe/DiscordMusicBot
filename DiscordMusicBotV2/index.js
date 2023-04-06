@@ -2,7 +2,7 @@ const path = require('node:path');
 const {
     Client,
     GatewayIntentBits,
-    Collection, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle
+    Collection, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType
 } = require('discord.js');
 const {token, version} = require('./config.json');
 const fs = require('node:fs');
@@ -16,7 +16,7 @@ const {
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 const {generateDependencyReport} = require('@discordjs/voice');
-const {spotify, search, is_expired, refreshToken, source, stream} = require("play-dl");
+const {spotify, search, is_expired, refreshToken, stream, soundcloud, setToken, getFreeClientID} = require("play-dl");
 
 const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates]});
 
@@ -45,14 +45,19 @@ for (const file of commandFiles) {
 
 client.once('ready', () => {
     console.log('Ready!');
+    getFreeClientID().then((clientID) => setToken({
+        soundcloud : {
+            client_id : clientID
+        }
+    }))
     if (args[0] === "debug") {
         client.user.setPresence({
-            activities: [{name: "Under Maintenance. Do not use!"}],
+            activities: [{name: "Under Maintenance. Do not use!", type: ActivityType.Watching}],
             status: 'dnd'
         });
     } else {
         client.user.setPresence({
-            activities: [{name: `Chilling in Alpha! (${version})`}],
+            activities: [{name: `/play`, type: ActivityType.Listening}],
             status: 'online'
         });
     }
@@ -210,7 +215,8 @@ async function play(guild, song) {
     serverQueue.playing = true;
 
     try {
-        if (song.url.includes("youtube") && !song.url.includes(".mp3" || ".wav" || ".ogg") || song.url.includes("spotify") && !song.url.includes(".mp3" || ".wav" || ".ogg")) {
+        if (song.url.includes("youtube") && !song.url.includes(".mp3" || ".wav" || ".ogg") || song.url.includes("spotify") && !song.url.includes(".mp3" || ".wav" || ".ogg")
+            || song.url.includes("soundcloud") && !song.url.includes(".mp3" || ".wav" || ".ogg")) {
             if (song.url.includes("youtube")) {
                 if (song.title === null || song.duration === null || song.thumbnail === null) {
                     // Check if url is a playlist
@@ -222,6 +228,13 @@ async function play(guild, song) {
                     song.title = info.videoDetails.title;
                     song.duration = info.videoDetails.lengthSeconds;
                     song.thumbnail = info.videoDetails.thumbnails[0].url;
+                }
+            } else if (song.url.includes("soundcloud")) {
+                if (song.title === null || song.duration === null || song.thumbnail === null) {
+                    const info = await soundcloud(song.url);
+                    song.title = info.name;
+                    song.duration = info.durationInSec;
+                    song.thumbnail = info.thumbnail;
                 }
             } else {
                 try {
@@ -246,11 +259,11 @@ async function play(guild, song) {
                     song.url = video[0].url;
                 } catch (e) {
                     console.error(e);
-                    // Create Now Playing Embed
                     const playFailed = new EmbedBuilder()
                         .setTitle('SONG PLAY FAILED')
                         .setURL(song.url)
                         .setColor(0x0000ff)
+                        .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
                         .setDescription(`🖸 \`${song.title}\` Song play failed! Please try again later. Error: ${e}`)
                         .setThumbnail(song.thumbnail)
                     serverQueue.songs.shift();
@@ -266,6 +279,7 @@ async function play(guild, song) {
                 .setColor(0x0000ff)
                 .setDescription(`🖸 \`${song.title}\``)
                 .setThumbnail(song.thumbnail)
+                .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
                 .addFields(
                     {name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true},
                     {name: '⏰ Duration', value: `${await convertSecondsToTime(song.duration)}`, inline: true},
@@ -321,7 +335,7 @@ async function play(guild, song) {
             resource.volume.setVolume(serverQueue.volume)
             serverQueue.audioResource = resource;
             const connection = serverQueue.connection;
-            connection.on('debug', console.log).on('stateChange', (oldState, newState) => { console.log(oldState.status, '->', newState.status); });
+            connection.removeAllListeners();
             await connection.subscribe(player);
             player.on(AudioPlayerStatus.Idle, async () => {
                 if (!serverQueue.loop)
@@ -350,12 +364,9 @@ async function play(guild, song) {
                 console.error(error);
             }).on(AudioPlayerStatus.AutoPaused, () => {
                 setTimeout(function () {
-                    var unpaused = false;
-                    while (!unpaused) {
-                        console.log("Unpausing");
-                        unpaused = player.unpause();
-                    }
-                }, 1500);
+                    console.log("Unpausing");
+                    player.unpause();
+                }, 1000);
             });
             await player.play(resource);
             await serverQueue.textChannel.send({embeds: [nowPlayingEmbed], components: [nowPlayingComponents, AudioControlComponents]});
@@ -366,6 +377,7 @@ async function play(guild, song) {
                 .setURL(song.url)
                 .setColor(0x0000ff)
                 .setDescription(`🖸 \`${song.title}\``)
+                .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
                 .setThumbnail(song.thumbnail)
                 .addFields(
                     {name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true}
