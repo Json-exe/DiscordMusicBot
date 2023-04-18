@@ -33,18 +33,18 @@ module.exports = {
 
         // Checking if song is from spotify
         if (songURL.includes("spotify")) {
-            interaction.deferReply( { fetchReply: true } );
+            await interaction.deferReply();
             await wait(600);
             if (is_expired()) {
                 await refreshToken();
             }
             await spotifyLinks(interaction, songURL, serverQueue);
         } else if (songURL.includes("youtube") || songURL.includes("youtu.be")) {
-            interaction.deferReply( { fetchReply: true } );
+            await interaction.deferReply();
             await wait(600);
             await youtubeLinks(interaction, songURL, serverQueue);
         } else if (songURL.includes("soundcloud")) {
-            interaction.deferReply( { fetchReply: true } );
+            await interaction.deferReply();
             await wait(600);
             await soundcloudLinks(interaction, songURL, serverQueue);
         } else {
