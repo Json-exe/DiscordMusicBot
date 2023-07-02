@@ -44,6 +44,7 @@ module.exports = {
             await wait(600);
             await youtubeLinks(interaction, songURL, serverQueue);
         } else if (songURL.includes("soundcloud")) {
+            return await interaction.reply({ embeds: [ new EmbedBuilder().setTitle("Soundcloud support is currently removed due to a problem with the play-dl library on linux.").setColor(0x0000ff) ] });
             await interaction.deferReply();
             await wait(600);
             await soundcloudLinks(interaction, songURL, serverQueue);
@@ -196,6 +197,10 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
         audioPlayer: null,
         loop: false
     };
+
+    // Hotfix for German links
+    songURL = songURL.replace("intl-de/", "");
+
     // Check if the song is a playlist
     if (songURL.includes("playlist")) {
         // Get the playlist
