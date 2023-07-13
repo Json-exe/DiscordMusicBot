@@ -85,7 +85,7 @@ async function soundcloudLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${song.title}\``)
             .setThumbnail(song.thumbnail)
-            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},
@@ -110,7 +110,7 @@ async function soundcloudLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${sound.name}\``)
             .setThumbnail(songs[0].thumbnail)
-            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":musical_note:Songs", value: `${sound.tracksCount}`, inline: true},
@@ -224,7 +224,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${playlistInfo.name}\``)
             .setThumbnail(playlistInfo.thumbnail.url)
-            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":musical_note:Songs", value: `${playlist.length}`, inline: true},
@@ -312,7 +312,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${spotifyAlbum.name}\``)
             .setThumbnail(spotifyAlbum.thumbnail.url)
-            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":musical_note:Songs", value: `${albumTracks.length}`, inline: true},
@@ -408,7 +408,7 @@ async function spotifyLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${song.title}\``)
             .setThumbnail(song.thumbnail)
-            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},
@@ -461,7 +461,7 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${playlist.title}\``)
             .setThumbnail(playlist.thumbnail.url)
-            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":musical_note:Songs", value: `${playlist.videoCount}`, inline: true},
@@ -528,7 +528,7 @@ async function youtubeLinks(interaction, songURL, serverQueue) {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${song.title}\``)
             .setThumbnail(song.thumbnail)
-            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},

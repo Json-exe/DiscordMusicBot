@@ -26,7 +26,7 @@ module.exports = {
             embed.setTitle("Search Results (Top 10)");
             embed.setDescription("Select the song you want to play.");
             embed.setThumbnail(searchResult[0].thumbnails[0].url);
-            embed.setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"});
+            embed.setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"});
             let fields = [];
             for (let i = 0; i < searchResult.length; i++) {
                 fields.push({ name: ` `, value: `${i+1}) [${searchResult[i].title}](${searchResult[i].url}) - ${await main.convertSecondsToTime(searchResult[i].durationInSec)}`, inline: false });
@@ -82,7 +82,7 @@ module.exports = {
             .setColor(0x0000ff)
             .setDescription(`:white_check_mark: \`${song.title}\``)
             .setThumbnail(song.thumbnail)
-            .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+            .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
             .addFields(
                 {name: ":microphone:Added by", value: `${interaction.member}`, inline: true},
                 {name: ":alarm_clock:Duration", value: `❯ ${await main.convertSecondsToTime(song.duration)}`, inline: true},

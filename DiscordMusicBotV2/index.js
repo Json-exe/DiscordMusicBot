@@ -263,7 +263,7 @@ async function play(guild, song) {
                         .setTitle('SONG PLAY FAILED')
                         .setURL(song.url)
                         .setColor(0x0000ff)
-                        .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+                        .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
                         .setDescription(`🖸 \`${song.title}\` Song play failed! Please try again later. Error: ${e}`)
                         .setThumbnail(song.thumbnail)
                     serverQueue.songs.shift();
@@ -279,7 +279,7 @@ async function play(guild, song) {
                 .setColor(0x0000ff)
                 .setDescription(`🖸 \`${song.title}\``)
                 .setThumbnail(song.thumbnail)
-                .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+                .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
                 .addFields(
                     {name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true},
                     {name: '⏰ Duration', value: `${await convertSecondsToTime(song.duration)}`, inline: true},
@@ -377,7 +377,7 @@ async function play(guild, song) {
                 .setURL(song.url)
                 .setColor(0x0000ff)
                 .setDescription(`🖸 \`${song.title}\``)
-                .setFooter({ text: `JasonMusic Version: ${version} | Made by Jason#8119`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
+                .setFooter({ text: `JasonMusic Version: ${version} | Made by jas_on`, iconURL: "https://cdn.discordapp.com/app-icons/1028372176878964808/095cf300281d0b859ba7738dba49087d.png?size=256"})
                 .setThumbnail(song.thumbnail)
                 .addFields(
                     {name: ':microphone: Requested By', value: `${song.requestedBy}`, inline: true}
