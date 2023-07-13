@@ -1,9 +1,8 @@
 const { REST, Routes } = require('discord.js');
 const fs = require('node:fs');
+const { token } = require('./config.json');
 
 const clientId = "1028372176878964808"
-const token = "MTAyODM3MjE3Njg3ODk2NDgwOA.GtE2P9.XjeRgwEzCLctngRWS2pOAg5b-0LwopCricMI_k"
-
 const commands = [];
 
 const commandFiles = fs.readdirSync('./Commands').filter(file => file.endsWith('.js'));
