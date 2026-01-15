@@ -1,0 +1,9 @@
+﻿{
+	"watch": ["src"],
+	"ext": "ts,json",
+	"ignore": ["dist"],
+	"exec": "node -r dotenv/config -r ts-node/register src/index.ts",
+	"env": {
+		"DOTENV_CONFIG_PATH": ".env"
+	}
+}

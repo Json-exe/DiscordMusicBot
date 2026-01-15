@@ -1,0 +1,42 @@
+{
+	"$schema": "https://json.schemastore.org/package.json",
+	"name": "DiscordMusicBotV3",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"lint": "prettier --check . && eslint --ext .ts --format=pretty src",
+		"deploy": "node --env-file=.env dist/util/deploy.js",
+		"format": "prettier --write . && eslint --ext .ts --fix --format=pretty src",
+		"start": "node --env-file=.env dist/index.js",
+		"dev": "tsx --env-file=.env --inspect src/index.ts",
+		"test": "tsx --test src/tests/**/*.ts"
+	},
+	"dependencies": {
+		"@discordjs/core": "^2.3.0",
+		"@discordjs/opus": "^0.10.0",
+		"@discordjs/voice": "^0.19.0",
+		"@snazzah/davey": "^0.1.9",
+		"discord.js": "^14.24.0",
+		"inversify": "^7.10.6",
+		"lavalink-client": "^2.7.7",
+		"reflect-metadata": "^0.2.2",
+		"youtube-dl-exec": "^3.0.27"
+	},
+	"devDependencies": {
+		"@sapphire/ts-config": "^5.0.1",
+		"@types/node": "^22.18.8",
+		"eslint": "^9.37.0",
+		"eslint-config-neon": "^0.2.7",
+		"eslint-formatter-compact": "^8.40.0",
+		"eslint-formatter-pretty": "^7.0.0",
+		"prettier": "^3.6.2",
+		"tsx": "^4.19.1",
+		"typescript": "~5.9.3",
+		"zod": "^3.25.76"
+	},
+	"engines": {
+		"node": ">=22.12.0"
+	}
+}

@@ -264,3 +264,6 @@ back
 DiscordMusicBotV2/config.json
 DiscordMusicBotV2/DiscordMusicBot-ServerFiles
 DiscordMusicBotV2/DiscordMusicBot-ServerFiles.zip
+/.idea
+/DiscordMusicBotV2/.idea/
+/DiscordMusicBotV3/.vscode/extensions.json
