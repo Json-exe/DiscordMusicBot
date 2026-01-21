@@ -7,9 +7,7 @@ const container = new Container();
 
 container.bind(ServiceIdentifiers.LinkParserService).to(LinkParserService).inSingletonScope();
 container.bind(ServiceIdentifiers.AudioPlayerService).to(AudioPlayerService).inSingletonScope();
-// Register the YouTubeLinkParser as ILinkParser so that LinkParserService can use it
 import YouTubeLinkParser from '../Services/Parser/YouTubeLinkParser.js';
-const parsers: ILinkParser[] = [new YouTubeLinkParser()];
-container.bind<ILinkParser[]>(ServiceIdentifiers.LinkParsers).toConstantValue(parsers);
+container.bind<ILinkParser>(ServiceIdentifiers.LinkParsers).to(YouTubeLinkParser).inSingletonScope();
 
 export default container;

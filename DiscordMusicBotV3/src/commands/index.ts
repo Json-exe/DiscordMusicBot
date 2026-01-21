@@ -1,6 +1,7 @@
-import { RESTPostAPIApplicationCommandsJSONBody, CommandInteraction, MessageFlags, GuildMember } from 'discord.js';
+import { RESTPostAPIApplicationCommandsJSONBody, CommandInteraction, MessageFlags } from 'discord.js';
 import { z } from 'zod';
 import type { StructurePredicate } from '../util/loaders.js';
+import { isGuildMemberChatGuard } from './utility/utilities.js';
 
 /**
  * Defines the structure of a command
@@ -32,6 +33,12 @@ export const schema = z.object({
 export const predicate: StructurePredicate<Command> = (structure: unknown): structure is Command =>
 	schema.safeParse(structure).success;
 
+/**
+ * Checks the availability of a voice channel for interaction, ensuring the user and the bot meet the necessary conditions.
+ *
+ * @param {CommandInteraction} interaction - The interaction object representing the command invoked by the user.
+ * @return {Promise<boolean>} A promise that resolves to `true` if the voice channel is available and accessible, otherwise `false`.
+ */
 export async function checkVoiceChannelAvailability(interaction: CommandInteraction) {
 	const member = interaction.member;
 	if (!member || !interaction.guild) {
@@ -42,7 +49,7 @@ export async function checkVoiceChannelAvailability(interaction: CommandInteract
 		return false;
 	}
 
-	if (!(member instanceof GuildMember)) {
+	if (!isGuildMemberChatGuard(member)) {
 		await interaction.reply({
 			content: 'Member information is not available.',
 			flags: MessageFlags.Ephemeral,

@@ -6,6 +6,7 @@ import container from './util/containerSetup.js';
 import { LavalinkManager } from 'lavalink-client';
 import { ServiceIdentifiers } from './util/models.js';
 import { generateDependencyReport } from '@discordjs/voice';
+import JasonMusicPlayer from './Services/JasonMusicPlayer.js';
 
 console.log('Bootstrapping Discord bot…', process.env.DISCORD_TOKEN ? 'token ok' : 'token fehlt');
 process.on('unhandledRejection', (err) => console.error('Unhandled rejection', err));
@@ -14,13 +15,14 @@ process.on('unhandledRejection', (err) => console.error('Unhandled rejection', e
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
 container.bind(ServiceIdentifiers.Client).toConstantValue(client);
 
-const manager = new LavalinkManager({
+const manager = new LavalinkManager<JasonMusicPlayer>({
 	nodes: [
 		{
 			authorization: 'youshallnotpass',
 			host: 'localhost',
 			port: 2333,
 			id: 'testnode',
+			enablePingOnStatsCheck: true,
 		},
 	],
 	sendToShard: (guildId, payload) => client.guilds.cache.get(guildId)?.shard?.send(payload),
@@ -29,6 +31,23 @@ const manager = new LavalinkManager({
 		id: process.env.APPLICATION_ID ?? '000000000000000000',
 		username: 'JasonMusic',
 	},
+	playerClass: JasonMusicPlayer,
+	autoSkipOnResolveError: true,
+	playerOptions: {
+		onEmptyQueue: {
+			destroyAfterMs: 900_000,
+		},
+	},
+});
+manager.on('queueEnd', async (player) => {
+	if (!player.connected) return;
+	console.log(`Queue ended for guild ${player.guildId}, starting end timer.`);
+	await player.startQueueEndTimer(client);
+});
+manager.on('trackStart', async (player) => {
+	console.log(`Track started for guild ${player.guildId}.`);
+	player.stopQueueEndTimer();
+	await player.sendNpMessage(client);
 });
 container.bind(ServiceIdentifiers.LavaLinkManager).toConstantValue(manager);
 
