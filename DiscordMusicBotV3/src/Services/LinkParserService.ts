@@ -2,6 +2,7 @@
 import { Snowflake, User } from 'discord.js';
 import container from '../util/containerSetup.js';
 import JasonMusicPlayer from './JasonMusicPlayer.js';
+import { SearchResult, UnresolvedSearchResult } from 'lavalink-client';
 
 export default class LinkParserService {
 	public async checkLinkSupport(link: string): Promise<ILinkParser | undefined> {
@@ -17,6 +18,11 @@ export interface ILinkParser {
 		channelId: Snowflake,
 		requestUser: User,
 		textChannelId?: Snowflake,
-	): Promise<JasonMusicPlayer | undefined>;
+	): Promise<ParsedLinkResult | undefined>;
 	supportsLink(link: string): boolean;
 }
+
+export type ParsedLinkResult = {
+	player: JasonMusicPlayer;
+	result: UnresolvedSearchResult | SearchResult;
+};

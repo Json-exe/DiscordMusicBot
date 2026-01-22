@@ -49,6 +49,17 @@ manager.on('trackStart', async (player) => {
 	player.stopQueueEndTimer();
 	await player.sendNpMessage(client);
 });
+manager.on('playerVoiceLeave', async (player) => {
+	console.log(`Player left voice channel for guild ${player.guildId}.`);
+	if (!player.voiceChannelId) return;
+	const channel = client.channels.cache.get(player.voiceChannelId);
+	if (!channel || !channel.isVoiceBased()) return;
+	if (channel.members.size === 1) {
+		console.log(`Voice channel is empty, stopping and destroying player in guild: ${player.guildId}.`);
+		player.stopQueueEndTimer();
+		await player.destroy('No members left in voice channel');
+	}
+});
 container.bind(ServiceIdentifiers.LavaLinkManager).toConstantValue(manager);
 
 // Load the events and commands

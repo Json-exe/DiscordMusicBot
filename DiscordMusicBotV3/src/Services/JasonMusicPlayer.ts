@@ -53,7 +53,7 @@ export default class JasonMusicPlayer extends Player {
 		this.currentNpMessage = await this.currentNpMessage.edit({ components: [row.toJSON()] });
 	};
 
-	private getHumanReadableDuration = (durationMs?: number) => {
+	getHumanReadableDuration = (durationMs?: number) => {
 		if (!durationMs) return 'Unknown duration or LIVE';
 		const totalSeconds = Math.floor(durationMs / 1000);
 		const hours = Math.floor(totalSeconds / 3600);

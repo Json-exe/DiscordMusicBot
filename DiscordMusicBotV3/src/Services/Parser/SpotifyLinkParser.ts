@@ -1,16 +1,11 @@
-﻿import { ILinkParser, ParsedLinkResult } from '../LinkParserService.js';
-import { Snowflake, User } from 'discord.js';
+﻿import { Snowflake, User } from 'discord.js';
+import { ILinkParser, ParsedLinkResult } from '../LinkParserService.js';
+import { ServiceIdentifiers } from '../../util/models.js';
 import AudioPlayerService from '../AudioPlayerService.js';
 import { inject } from 'inversify';
-import { ServiceIdentifiers } from '../../util/models.js';
 
-export default class YouTubeLinkParser implements ILinkParser {
+export default class SpotifyLinkParser implements ILinkParser {
 	constructor(@inject(ServiceIdentifiers.AudioPlayerService) private readonly audioService: AudioPlayerService) {}
-
-	supportsLink(link: string): boolean {
-		const ytRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
-		return ytRegex.test(link);
-	}
 
 	async parseLink(
 		link: string,
@@ -20,19 +15,19 @@ export default class YouTubeLinkParser implements ILinkParser {
 		textChannelId?: Snowflake,
 	) {
 		if (!this.supportsLink(link))
-			throw new Error('YouTubeLinkParser requires a valid link! Be sure to call supportsLink first.');
+			throw new Error('SpotifyLinkParser requires a valid link! Be sure to call supportsLink first.');
 
-		const sanitizedLink = this.sanitizeLink(link);
 		const player = this.audioService.getOrCreatePlayer(guildId, channelId, textChannelId);
-		console.log(`Playing YouTube link: ${sanitizedLink}`);
+		console.log(`Playing Spotify link: ${link}`);
 		const searchResult = await player.search(
 			{
-				query: sanitizedLink,
+				query: link,
 			},
 			requestUser,
 		);
+
 		if (searchResult.loadType === 'error' || searchResult.loadType === 'empty') {
-			throw new Error('Could not find video!');
+			throw new Error('Could not find spotify track!');
 		}
 
 		if (searchResult.loadType === 'track') {
@@ -51,11 +46,9 @@ export default class YouTubeLinkParser implements ILinkParser {
 		return resultType;
 	}
 
-	private sanitizeLink(link: string) {
-		if (link.includes('watch') && link.includes('&list')) {
-			return link.split('&list')[0];
-		}
-
-		return link;
+	supportsLink(link: string): boolean {
+		const spotifyRegex =
+			/^(https?:\/\/)?(www\.)?open\.spotify\.com\/(intl-[a-zA-Z]+\/)?(track|album|playlist)\/[a-zA-Z0-9]+/;
+		return spotifyRegex.test(link);
 	}
 }

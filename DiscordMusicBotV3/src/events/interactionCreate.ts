@@ -36,7 +36,9 @@ async function processButton(interaction: ButtonInteraction) {
 	if (!player || !player.connected) return;
 	switch (interaction.customId) {
 		case 'skip':
-			await player.skip();
+			if (player.queue.tracks.length > 1) {
+				await player.skip();
+			}
 			break;
 		case 'previous':
 			const previousTrack = await player.queue.shiftPrevious();
@@ -47,7 +49,7 @@ async function processButton(interaction: ButtonInteraction) {
 		case 'play_pause':
 			if (player.playing) {
 				await player.pause();
-			} else {
+			} else if (player.paused) {
 				await player.resume();
 			}
 			break;
