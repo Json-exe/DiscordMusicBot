@@ -29,7 +29,7 @@ export default class JasonMusicPlayer extends Player {
 				name: this.queue.current.info.author,
 			});
 		}
-		if (this.queue.current?.info.uri) {
+		if (this.queue.current?.info.uri && this.queue.current.info.uri.startsWith('http')) {
 			npEmbed.setURL(this.queue.current.info.uri);
 		}
 

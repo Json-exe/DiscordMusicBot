@@ -26,7 +26,6 @@ export default {
 		const fileName = interaction.options.getString('file');
 		if (!fileName) return;
 
-		// TODO: Set music path on client in env file.
 		const music_dir = process.env.MUSIC_DIRECTORY;
 		if (!music_dir) throw new Error('MUSIC_DIRECTORY is not defined in environment variables');
 

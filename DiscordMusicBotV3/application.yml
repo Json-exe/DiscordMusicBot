@@ -5,12 +5,12 @@ server: # REST and WS server
     enabled: false # Whether to enable HTTP/2 support
 lavalink:
   plugins:
-#    - dependency: "com.github.example:example-plugin:1.0.0" # required, the coordinates of your plugin
-#      repository: "https://maven.example.com/releases" # optional, defaults to the Lavalink releases repository by default
-#      snapshot: false # optional, defaults to false, used to tell Lavalink to use the snapshot repository instead of the release repository
-#  pluginsDir: "./plugins" # optional, defaults to "./plugins"
-#  defaultPluginRepository: "https://maven.lavalink.dev/releases" # optional, defaults to the Lavalink release repository
-#  defaultPluginSnapshotRepository: "https://maven.lavalink.dev/snapshots" # optional, defaults to the Lavalink snapshot repository
+    #    - dependency: "com.github.example:example-plugin:1.0.0" # required, the coordinates of your plugin
+    #      repository: "https://maven.example.com/releases" # optional, defaults to the Lavalink releases repository by default
+    #      snapshot: false # optional, defaults to false, used to tell Lavalink to use the snapshot repository instead of the release repository
+    #  pluginsDir: "./plugins" # optional, defaults to "./plugins"
+    #  defaultPluginRepository: "https://maven.lavalink.dev/releases" # optional, defaults to the Lavalink release repository
+    #  defaultPluginSnapshotRepository: "https://maven.lavalink.dev/snapshots" # optional, defaults to the Lavalink snapshot repository
     - dependency: "dev.lavalink.youtube:youtube-plugin:1.16.0"
       snapshot: false # Set to true if you want to use a snapshot version.
 
@@ -60,20 +60,20 @@ lavalink:
     youtubeSearchEnabled: true
     soundcloudSearchEnabled: true
     gc-warnings: true
-    #ratelimit:
+      #ratelimit:
       #ipBlocks: ["1.0.0.0/8", "..."] # list of ip blocks
       #excludedIps: ["...", "..."] # ips which should be explicit excluded from usage by lavalink
       #strategy: "RotateOnBan" # RotateOnBan | LoadBalance | NanoSwitch | RotatingNanoSwitch
       #searchTriggersFail: true # Whether a search 429 should trigger marking the ip as failing
       #retryLimit: -1 # -1 = use default lavaplayer value | 0 = infinity | >0 = retry will happen this numbers times
-    #youtubeConfig: # Required for avoiding all age restrictions by YouTube, some restricted videos still can be played without.
+      #youtubeConfig: # Required for avoiding all age restrictions by YouTube, some restricted videos still can be played without.
       #email: "" # Email of Google account
       #password: "" # Password of Google account
-    #httpConfig: # Useful for blocking bad-actors from ip-grabbing your music node and attacking it, this way only the http proxy will be attacked
+      #httpConfig: # Useful for blocking bad-actors from ip-grabbing your music node and attacking it, this way only the http proxy will be attacked
       #proxyHost: "localhost" # Hostname of the proxy, (ip or domain)
       #proxyPort: 3128 # Proxy port, 3128 is the default for squidProxy
       #proxyUser: "" # Optional user for basic authentication fields, leave blank if you don't use basic auth
-      #proxyPassword: "" # Password for basic authentication
+    #proxyPassword: "" # Password for basic authentication
     timeouts:
       connectTimeoutMs: 3000
       connectionRequestTimeoutMs: 3000
@@ -197,9 +197,9 @@ logging:
 
   level:
     root: INFO
-    lavalink: Info
-    # lavalink.server.io.SocketContext: TRACE
-    # com.sedmelluq.discord.lavaplayer.tools.ExceptionTools: DEBUG
+    lavalink: DEBUG
+    lavalink.server.io.SocketContext: DEBUG
+    com.sedmelluq.discord.lavaplayer.tools.ExceptionTools: DEBUG
     com.github.topi314.lavasrc: DEBUG
 
   request:
