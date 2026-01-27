@@ -59,7 +59,7 @@ export default {
 						author = result.result.playlist?.author ?? '';
 					}
 
-					result.player.startPlayerIfNeeded();
+					await result.player.startPlayerIfNeeded();
 					if (name.length <= 0) {
 						await interaction.editReply({
 							embeds: [new EmbedBuilder().setTitle(`Queued your song!`).setColor(0x0000ff)],

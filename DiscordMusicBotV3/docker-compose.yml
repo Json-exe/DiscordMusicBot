@@ -1,0 +1,25 @@
+﻿version: '3.9'
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: discord-music-bot:v3
+    env_file:
+      - .env
+    volumes:
+      - ./music:/app/music
+    depends_on:
+      - lavalink
+    restart: unless-stopped
+
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:4
+    environment:
+      SERVER_PORT: 2333
+      SERVER_PASSWORD: youshallnotpass
+      SERVER_ADDRESS: 0.0.0.0
+      JAVA_TOOL_OPTIONS: -Xms256M -Xmx512M
+    ports:
+      - '2333:2333'
+    restart: unless-stopped

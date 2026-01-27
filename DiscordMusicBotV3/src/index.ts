@@ -9,6 +9,13 @@ import { generateDependencyReport } from '@discordjs/voice';
 import JasonMusicPlayer from './Services/JasonMusicPlayer.js';
 
 console.log('Bootstrapping Discord bot…', process.env.DISCORD_TOKEN ? 'token ok' : 'token fehlt');
+
+const lavalinkHost = process.env.LAVALINK_HOST ?? 'localhost';
+const lavalinkPort = Number(process.env.LAVALINK_PORT ?? '2333') || 2333;
+const lavalinkAuth = process.env.LAVALINK_AUTH ?? 'youshallnotpass';
+const lavalinkNodeId = process.env.LAVALINK_NODE_ID ?? 'testnode';
+const lavalinkSecure = (process.env.LAVALINK_SECURE ?? 'false').toLowerCase() === 'true';
+
 process.on('unhandledRejection', (err) => console.error('Unhandled rejection', err));
 
 // Initialize the client
@@ -18,10 +25,11 @@ container.bind(ServiceIdentifiers.Client).toConstantValue(client);
 const manager = new LavalinkManager<JasonMusicPlayer>({
 	nodes: [
 		{
-			authorization: 'youshallnotpass',
-			host: 'localhost',
-			port: 2333,
-			id: 'testnode',
+			authorization: lavalinkAuth,
+			host: lavalinkHost,
+			port: lavalinkPort,
+			id: lavalinkNodeId,
+			secure: lavalinkSecure,
 			enablePingOnStatsCheck: true,
 		},
 	],
@@ -29,7 +37,7 @@ const manager = new LavalinkManager<JasonMusicPlayer>({
 	autoSkip: true,
 	client: {
 		id: process.env.APPLICATION_ID ?? '000000000000000000',
-		username: 'JasonMusic',
+		username: process.env.BOT_USERNAME ?? 'JasonMusic',
 	},
 	playerClass: JasonMusicPlayer,
 	autoSkipOnResolveError: true,
