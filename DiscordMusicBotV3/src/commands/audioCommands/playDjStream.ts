@@ -20,7 +20,7 @@ export default {
 			return;
 		}
 
-		const streamUrl = 'http://host.docker.internal:8000/radio.ogg';
+		const streamUrl = process.env.DJ_STREAMING_URL ?? 'http://host.docker.internal:8000/radio.ogg';
 		const response = await fetch(streamUrl);
 		if (!response.ok) {
 			await interaction.reply({
