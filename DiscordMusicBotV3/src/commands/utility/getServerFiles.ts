@@ -9,8 +9,8 @@ export default {
 		description: 'Get all files in the music folder on the server',
 	},
 	async execute(interaction: CommandInteraction) {
-		const music_dir = process.env.MUSIC_DIR;
-		if (!music_dir) throw new Error('MUSIC_DIR is not defined in environment variables');
+		const music_dir = process.env.MUSIC_DIRECTORY;
+		if (!music_dir) throw new Error('MUSIC_DIRECTORY is not defined in environment variables');
 
 		try {
 			const dir = path.resolve(music_dir);

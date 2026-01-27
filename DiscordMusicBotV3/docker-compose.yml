@@ -10,7 +10,8 @@ services:
     volumes:
       - ./music:/app/music
     depends_on:
-      - lavalink
+      lavalink:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - lavalink
@@ -18,8 +19,13 @@ services:
   lavalink:
     # pin the image version to Lavalink v4 and use the alpine variant for a smaller image size
     image: ghcr.io/lavalink-devs/lavalink:4-alpine
-    container_name: lavalink
+    container_name: lavalink_test
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "2333" ]
+      interval: 10s
+      timeout: 20s
+      retries: 3
     environment:
       # set Java options here (6GB heap size)
       - _JAVA_OPTIONS=-Xmx6G
@@ -29,7 +35,7 @@ services:
       # - LAVALINK_SERVER_PASSWORD=youshallnotpass
     volumes:
       # mount application.yml from the same directory, if you want to use environment variables remove this line below
-      - ./application.yml:/opt/Lavalink/application.yml
+      - ./application.yml:/opt/Lavalink/application.yml:ro
       # persist plugins between restarts, make sure to create the folder & set the correct permissions and user/group id mentioned above
       - ./plugins/:/opt/Lavalink/plugins/
       - ./music/:/opt/Lavalink/local_music
@@ -38,7 +44,7 @@ services:
     expose:
       # lavalink exposes port 2333 to connect to for other containers (this is for documentation purposes only)
       - 2333
-    # ports:
+      # ports:
       # you only need this if you want to make your lavalink accessible from outside of containers, keep in mind this will expose your lavalink to the internet
       # - "2333:2333"
       # if you want to restrict access to localhost only

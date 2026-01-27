@@ -7,8 +7,6 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY tsconfig*.json ./
 COPY src ./src
-COPY music ./music
-COPY util ./util
 RUN pnpm install --frozen-lockfile
 RUN pnpm build
 RUN pnpm prune --prod
@@ -22,7 +20,6 @@ RUN apt-get update \
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY package.json pnpm-lock.yaml ./
-COPY music ./music
 RUN useradd --create-home --uid 10001 botuser && chown -R botuser:botuser /app
 USER botuser
 CMD ["node", "dist/index.js"]

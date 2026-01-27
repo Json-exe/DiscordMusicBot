@@ -23,7 +23,7 @@
 		"inversify": "^7.10.6",
 		"lavalink-client": "^2.7.7",
 		"reflect-metadata": "^0.2.2",
-		"youtube-dl-exec": "^3.0.27"
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@sapphire/ts-config": "^5.0.1",
@@ -34,8 +34,7 @@
 		"eslint-formatter-pretty": "^7.0.0",
 		"prettier": "^3.6.2",
 		"tsx": "^4.19.1",
-		"typescript": "~5.9.3",
-		"zod": "^3.25.76"
+		"typescript": "~5.9.3"
 	},
 	"engines": {
 		"node": ">=22.12.0"

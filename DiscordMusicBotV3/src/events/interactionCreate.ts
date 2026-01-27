@@ -36,7 +36,7 @@ async function processButton(interaction: ButtonInteraction) {
 	if (!player || !player.connected) return;
 	switch (interaction.customId) {
 		case 'skip':
-			if (player.queue.tracks.length > 1) {
+			if (player.queue.tracks.length > 0) {
 				await player.skip();
 			}
 			break;
