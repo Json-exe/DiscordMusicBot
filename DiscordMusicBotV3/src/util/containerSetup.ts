@@ -9,7 +9,9 @@ container.bind(ServiceIdentifiers.LinkParserService).to(LinkParserService).inSin
 container.bind(ServiceIdentifiers.AudioPlayerService).to(AudioPlayerService).inSingletonScope();
 import YouTubeLinkParser from '../Services/Parser/YouTubeLinkParser.js';
 import SpotifyLinkParser from '../Services/Parser/SpotifyLinkParser.js';
+import SoundCloudParser from '../Services/Parser/SoundCloudParser.js';
 container.bind<ILinkParser>(ServiceIdentifiers.LinkParsers).to(YouTubeLinkParser).inSingletonScope();
 container.bind<ILinkParser>(ServiceIdentifiers.LinkParsers).to(SpotifyLinkParser).inSingletonScope();
+container.bind<ILinkParser>(ServiceIdentifiers.LinkParsers).to(SoundCloudParser).inSingletonScope();
 
 export default container;

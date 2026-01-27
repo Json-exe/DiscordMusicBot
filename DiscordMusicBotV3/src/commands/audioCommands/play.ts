@@ -4,7 +4,6 @@ import LinkParserService from '../../Services/LinkParserService.js';
 import containerSetup from '../../util/containerSetup.js';
 import { ServiceIdentifiers } from '../../util/models.js';
 import { isGuildMemberChatGuard } from '../utility/utilities.js';
-import JasonMusicPlayer from '../../Services/JasonMusicPlayer.js';
 import { footerOptions } from '../../util/utilities.js';
 
 export default {
@@ -60,7 +59,7 @@ export default {
 						author = result.result.playlist?.author ?? '';
 					}
 
-					await startPlayerIfNeeded(result.player);
+					result.player.startPlayerIfNeeded();
 					if (name.length <= 0) {
 						await interaction.editReply({
 							embeds: [new EmbedBuilder().setTitle(`Queued your song!`).setColor(0x0000ff)],
@@ -114,19 +113,3 @@ export default {
 		});
 	},
 } satisfies Command;
-
-async function startPlayerIfNeeded(player: JasonMusicPlayer) {
-	if (!player.connected) {
-		await player.connect();
-		await player.play();
-		return;
-	}
-
-	if (player.paused) {
-		await player.resume();
-	} else if (!player.playing) {
-		await player.play();
-	}
-
-	await player.updateControls();
-}

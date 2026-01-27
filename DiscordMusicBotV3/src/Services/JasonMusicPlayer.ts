@@ -35,7 +35,7 @@ export default class JasonMusicPlayer extends Player {
 
 		const row = this.createNowPlayingComponents();
 		try {
-			if (this.currentNpMessage) {
+			if (this.currentNpMessage && this.currentNpMessage.editable) {
 				const row_disabled = this.createNowPlayingComponents(true);
 				await this.currentNpMessage.edit({ components: [row_disabled.toJSON()] });
 			}
@@ -48,7 +48,7 @@ export default class JasonMusicPlayer extends Player {
 	};
 
 	updateControls = async () => {
-		if (!this.currentNpMessage) return;
+		if (!this.currentNpMessage || !this.currentNpMessage.editable) return;
 		const row = this.createNowPlayingComponents();
 		this.currentNpMessage = await this.currentNpMessage.edit({ components: [row.toJSON()] });
 	};
@@ -95,6 +95,7 @@ export default class JasonMusicPlayer extends Player {
 			clearTimeout(this.queueEndTimer);
 		}
 
+		await this.updateControls();
 		const npChannel = client.channels.cache.get(this.options.textChannelId!);
 		if (!npChannel || !npChannel.isSendable() || !('guild' in npChannel)) return;
 		await npChannel.send({
@@ -116,4 +117,23 @@ export default class JasonMusicPlayer extends Player {
 			clearTimeout(this.queueEndTimer);
 		}
 	};
+
+	async startPlayerIfNeeded() {
+		await this.filterManager.setEQPreset('BetterMusic');
+		await this.filterManager.applyPlayerFilters();
+
+		if (!this.connected) {
+			await this.connect();
+			await this.play();
+			return;
+		}
+
+		if (this.paused) {
+			await this.resume();
+		} else if (!this.playing) {
+			await this.play();
+		}
+
+		await this.updateControls();
+	}
 }

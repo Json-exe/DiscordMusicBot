@@ -1,4 +1,9 @@
-import { RESTPostAPIApplicationCommandsJSONBody, CommandInteraction, MessageFlags } from 'discord.js';
+import {
+	RESTPostAPIApplicationCommandsJSONBody,
+	CommandInteraction,
+	MessageFlags,
+	StringSelectMenuInteraction,
+} from 'discord.js';
 import { z } from 'zod';
 import type { StructurePredicate } from '../util/loaders.js';
 import { isGuildMemberChatGuard } from './utility/utilities.js';
@@ -39,7 +44,9 @@ export const predicate: StructurePredicate<Command> = (structure: unknown): stru
  * @param {CommandInteraction} interaction - The interaction object representing the command invoked by the user.
  * @return {Promise<boolean>} A promise that resolves to `true` if the voice channel is available and accessible, otherwise `false`.
  */
-export async function checkVoiceChannelAvailability(interaction: CommandInteraction) {
+export async function checkVoiceChannelAvailability(
+	interaction: CommandInteraction | StringSelectMenuInteraction,
+): Promise<boolean> {
 	const member = interaction.member;
 	if (!member || !interaction.guild) {
 		await interaction.reply({
