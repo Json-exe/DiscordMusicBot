@@ -23,6 +23,14 @@ export default {
 			}
 
 			const files = fs.readdirSync(dir).filter((file: string) => file.endsWith('.mp3'));
+			if (files.length === 0) {
+				await interaction.reply({
+					content: 'No music files found on the server. Please add some music files.',
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+
 			let response = '';
 			for (const file of files) {
 				response += '- ' + file + '\n';
