@@ -49,11 +49,11 @@ lavalink:
       channelMix: true
       lowPass: true
     nonAllocatingFrameBuffer: false # Setting to true reduces the number of allocations made by each player at the expense of frame rebuilding (e.g. non-instantaneous volume changes)
-    bufferDurationMs: 300 # The duration of the NAS buffer. Higher values fare better against longer GC pauses. Duration <= 0 to disable JDA-NAS. Minimum of 40ms, lower values may introduce pauses.
-    frameBufferDurationMs: 5000 # How many milliseconds of audio to keep buffered
+    bufferDurationMs: 400 # The duration of the NAS buffer. Higher values fare better against longer GC pauses. Duration <= 0 to disable JDA-NAS. Minimum of 40ms, lower values may introduce pauses.
+    frameBufferDurationMs: 15000 # How many milliseconds of audio to keep buffered (raised for long videos & livestreams)
     opusEncodingQuality: 5 # Opus encoder quality. Valid values range from 0 to 10, where 10 is best quality but is the most expensive on the CPU.
     resamplingQuality: MEDIUM # Quality of resampling operations. Valid values are LOW, MEDIUM and HIGH, where HIGH uses the most CPU.
-    trackStuckThresholdMs: 5000 # The threshold for how long a track can be stuck. A track is stuck if does not return any audio data.
+    trackStuckThresholdMs: 15000 # The threshold for how long a track can be stuck. A track is stuck if does not return any audio data. (raised to avoid false positives on long YT videos)
     useSeekGhosting: true # Seek ghosting is the effect where whilst a seek is in progress, the audio buffer is read from until empty, or until seek is ready.
     youtubePlaylistLoadLimit: 3 # Number of pages at 100 each
     playerUpdateInterval: 2 # How frequently to send player updates to clients, in seconds
@@ -75,9 +75,9 @@ lavalink:
       #proxyUser: "" # Optional user for basic authentication fields, leave blank if you don't use basic auth
     #proxyPassword: "" # Password for basic authentication
     timeouts:
-      connectTimeoutMs: 3000
-      connectionRequestTimeoutMs: 3000
-      socketTimeoutMs: 3000
+      connectTimeoutMs: 10000       # raised: YouTube can be slow to accept connections
+      connectionRequestTimeoutMs: 10000
+      socketTimeoutMs: 30000        # raised: root cause of stuck tracks on long videos / livestreams
 
 plugins:
   youtube:
@@ -95,9 +95,9 @@ plugins:
     allowDirectPlaylistIds: true
     # For more details about client setup, refer to https://github.com/lavalink-devs/youtube-source?tab=readme-ov-file#available-clients
     clients:
-      - "ANDROID_MUSIC"
+      - "WEB"             # first: best all-round client, required for livestream support
       - "MUSIC"
-      - "WEB"
+      - "ANDROID_MUSIC"
       - "WEBEMBEDDED"
       - "TVHTML5EMBEDDED"
     ANDROID_MUSIC:

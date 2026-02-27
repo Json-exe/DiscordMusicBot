@@ -15,25 +15,25 @@
 		"test": "tsx --test src/tests/**/*.ts"
 	},
 	"dependencies": {
-		"@discordjs/core": "^2.3.0",
+		"@discordjs/core": "^2.4.0",
 		"@discordjs/opus": "^0.10.0",
 		"@discordjs/voice": "^0.19.0",
 		"@snazzah/davey": "^0.1.9",
-		"discord.js": "^14.24.0",
-		"inversify": "^7.10.6",
-		"lavalink-client": "^2.7.7",
+		"discord.js": "^14.25.1",
+		"inversify": "^7.11.0",
+		"lavalink-client": "^2.9.4",
 		"reflect-metadata": "^0.2.2",
 		"zod": "^3.25.76"
 	},
 	"devDependencies": {
-		"@sapphire/ts-config": "^5.0.1",
-		"@types/node": "^22.18.8",
-		"eslint": "^9.37.0",
-		"eslint-config-neon": "^0.2.7",
+		"@sapphire/ts-config": "^5.0.3",
+		"@types/node": "^22.19.13",
+		"eslint": "^9.39.3",
+		"eslint-config-neon": "^0.2.9",
 		"eslint-formatter-compact": "^8.40.0",
 		"eslint-formatter-pretty": "^7.0.0",
-		"prettier": "^3.6.2",
-		"tsx": "^4.19.1",
+		"prettier": "^3.8.1",
+		"tsx": "^4.21.0",
 		"typescript": "~5.9.3"
 	},
 	"engines": {
