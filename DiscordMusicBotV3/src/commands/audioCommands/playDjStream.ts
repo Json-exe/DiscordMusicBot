@@ -51,8 +51,8 @@ export default {
 
 		await interaction.reply({ content: `Playing DJ stream!` });
 		await player.stopPlaying();
-		await player.filterManager.setEQPreset('Electronic');
-		await player.filterManager.applyPlayerFilters();
+		await player.filterManager.resetFilters();
+		await player.filterManager.clearEQ();
 		player.queue.add(result.tracks[0]);
 		await player.connect();
 		await player.play();
