@@ -96,10 +96,11 @@ plugins:
     # For more details about client setup, refer to https://github.com/lavalink-devs/youtube-source?tab=readme-ov-file#available-clients
     clients:
       - "WEB"             # first: best all-round client, required for livestream support
-      - "MUSIC"
+      - "MWEB"
       - "ANDROID_MUSIC"
       - "WEBEMBEDDED"
-      - "TVHTML5EMBEDDED"
+      - "TVHTML5_SIMPLY"
+      - "MUSIC"
     ANDROID_MUSIC:
       playlistLoading: false
       videoLoading: true
